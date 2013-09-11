@@ -181,7 +181,7 @@ public class CustomMenu extends Menu
                 this.focus = tmpFocus;
             }
             
-            super.update(engine.getMouse(), engine.getKeyboard(), engine.getMain().getTimeDeductionPerUpdate());
+            super.update(engine.getMouse(), engine.getKeyboard(), engine.getMain().getTime());
         }
         else
         {

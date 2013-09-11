@@ -21,7 +21,7 @@ public class Resources implements IResources
     //collections of resources
     private enum Type
     {
-        MenuImage, MenuAudio, MenuFont, 
+        MenuImage, MenuAudio, Fonts, 
     }
     
     //root directory of all resources
@@ -39,9 +39,9 @@ public class Resources implements IResources
         Instructions1, Instructions2
     }
     
-    public enum MenuFont
+    public enum Fonts
     {
-        Dialog
+        Menu, Game
     }
     
     //indicates wether or not we are still loading resources
@@ -55,7 +55,7 @@ public class Resources implements IResources
         add(Type.MenuImage, (Object[])MenuImage.values(), RESOURCE_DIR + "images/menu/{0}.gif", "Loading Menu Image Resources", Manager.Type.Image);
         
         //load all game fonts
-        add(Type.MenuFont,  (Object[])MenuFont.values(),  RESOURCE_DIR + "font/menu/{0}.ttf", "Loading Menu Font Resources", Manager.Type.Font);
+        add(Type.Fonts,  (Object[])Fonts.values(),  RESOURCE_DIR + "font/{0}.ttf", "Loading Font Resources", Manager.Type.Font);
         
         //load all menu audio
         add(Type.MenuAudio, (Object[])MenuAudio.values(), RESOURCE_DIR + "audio/menu/{0}.wav", "Loading Menu Audio Resources", Manager.Type.Audio);
@@ -89,9 +89,9 @@ public class Resources implements IResources
         return everyResource.get(key);
     }
     
-    public Font getMenuFont(final Object key)
+    public Font getFont(final Object key)
     {
-        return getResources(Type.MenuFont).getFont(key);
+        return getResources(Type.Fonts).getFont(key);
     }
     
     public Image getMenuImage(final Object key)

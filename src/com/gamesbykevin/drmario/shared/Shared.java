@@ -13,15 +13,15 @@ import java.awt.image.BufferedImage;
 public class Shared 
 {
     //these dimensions is the size of the game window the user will see
-    public static final int INITIAL_WIDTH  = 800;
-    public static final int INITIAL_HEIGHT = 600;
+    public static final int INITIAL_WIDTH  = 260;
+    public static final int INITIAL_HEIGHT = 370;
     
     //the game is programmed in these dimensions
-    public static final int ORIGINAL_WIDTH  = 800;
-    public static final int ORIGINAL_HEIGHT = 600;
+    public static final int ORIGINAL_WIDTH  = 260;
+    public static final int ORIGINAL_HEIGHT = 370;
     
     //show UPS/FPS counters
-    public static final boolean DEBUG = false;
+    public static final boolean DEBUG = true;
     
     //how many updates per second, controls speed of game
     public static final int DEFAULT_UPS = 90;

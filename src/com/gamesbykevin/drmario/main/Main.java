@@ -252,7 +252,7 @@ public class Main extends Thread
      * 
      * @return long The nanosecond duration between each update
      */
-    public long getTimeDeductionPerUpdate()
+    public long getTime()
     {
         return (long)nanoSecondsPerUpdate;
     }

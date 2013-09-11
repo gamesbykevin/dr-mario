@@ -2,6 +2,7 @@ package com.gamesbykevin.drmario.engine;
 
 import com.gamesbykevin.drmario.main.Main;
 import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.Resources.*;
 import com.gamesbykevin.framework.input.*;
 import com.gamesbykevin.framework.input.Keyboard;
 
@@ -186,6 +187,8 @@ public class Engine implements KeyListener, MouseMotionListener, MouseListener, 
         //NOTE: DRAW MAIN GAME HERE
         if (manager != null)
         {
+            graphics.setFont(resources.getFont(Fonts.Game).deriveFont(18f));
+            
             manager.render(graphics);
         }
     }
@@ -199,7 +202,7 @@ public class Engine implements KeyListener, MouseMotionListener, MouseListener, 
     private void renderMenu(Graphics graphics) throws Exception
     {
         //set the appropriate game font
-        graphics.setFont(resources.getMenuFont(Resources.MenuFont.Dialog).deriveFont(18f));
+        graphics.setFont(resources.getFont(Fonts.Menu).deriveFont(18f));
         
         //if menu is setup draw menu
         if (menu.isSetup())
