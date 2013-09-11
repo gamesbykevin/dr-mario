@@ -64,8 +64,8 @@ public class Player
             //reset the time
             timer.reset();
             
-            //have we hit the bottom
-            if (pill.getRow() == board.getRows() - 1 || pill.getExtra().getRow() == board.getRows() - 1)
+            //have we hit the bottom row
+            if (pill.hasRow(board.getRows() - 1))
             {
                 //place piece and create new one
                 placePill(board);

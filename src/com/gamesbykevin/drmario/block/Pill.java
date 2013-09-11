@@ -24,7 +24,12 @@ public class Pill extends Block
     {
         super(getRandomPill());
         
+        //create new Block since a Pill constists of 2 Block(s)
         extra = new Block(getRandomPill());
+        
+        //make extra Block part of the same group so we know they are one
+        extra.setGroup(super.getGroup());
+        
     }
     
     public Block getExtra()
@@ -86,6 +91,16 @@ public class Pill extends Block
     {
         super.setDimensions(width, height);
         extra.setDimensions(width, height);
+    }
+    
+    /**
+     * Does the pill have a Block that has the same row as parameter row
+     * @param row The row we want to see if it matches
+     * @return boolean
+     */
+    public boolean hasRow(final int row)
+    {
+        return (getRow() == row || extra.getRow() == row);
     }
     
     public static Type getRandomPill()

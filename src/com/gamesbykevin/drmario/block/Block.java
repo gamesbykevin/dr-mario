@@ -30,6 +30,9 @@ public class Block extends Sprite
     //is this block dead
     private boolean dead = false;
     
+    //the group will be a way to tell if multiple Block(s) are part of one
+    private long group = System.nanoTime();
+    
     public Block(final Block block)
     {
         super(block);
@@ -40,6 +43,16 @@ public class Block extends Sprite
     public Block(final Type type)
     {
         this.type = type;
+    }
+    
+    public long getGroup()
+    {
+        return this.group;
+    }
+    
+    public void setGroup(final long group)
+    {
+        this.group = group;
     }
     
     public boolean isDead()
