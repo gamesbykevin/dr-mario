@@ -9,14 +9,14 @@ import java.util.List;
  * These are the enemies that need to be destroyed
  * @author GOD
  */
-public class Virus extends Block
+public class Virus extends Block 
 {
     public Virus()
     {
-        super(getRandomVirus());
+        super(getRandom());
     }
     
-    public static Type getRandomVirus()
+    public static Type getRandom()
     {
         List<Type> types = new ArrayList<>();
         
@@ -27,6 +27,11 @@ public class Virus extends Block
         }
         
         return types.get((int)(Math.random() * types.size()));
+    }
+    
+    public static boolean isVirus(final Block block)
+    {
+        return (isVirus(block.getType()));
     }
     
     public static boolean isVirus(final Type type)

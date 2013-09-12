@@ -1,142 +1,130 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package com.gamesbykevin.drmario.player;
 
-import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.block.Pill;
+import com.gamesbykevin.drmario.board.Board;
+import com.gamesbykevin.drmario.engine.Engine;
 
 import com.gamesbykevin.framework.base.Cell;
-import com.gamesbykevin.framework.input.Keyboard;
 import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 
-import java.awt.*;
-import java.awt.event.KeyEvent;
+import java.awt.Graphics;
 
 /**
- * The player will contain the pill piece and the input 
+ *
  * @author GOD
  */
-public class Player 
+public class Player implements IPlayer
 {
     //pill piece
     private Pill pill;
     
     //the start location for the Pill
-    private static final Cell START = new Cell(3, 0);
+    protected static final Cell START = new Cell(3, 0);
     
     //our timer object to determine when the pieces should drop
     private Timer timer;
     
-    public Player()
+    private boolean lose = false;
+    
+    /**
+     * Create a new timer with the specified delay that will determine the duration
+     * between Pill drops.
+     * @param delay The time delay in milliseconds
+     */
+    public Player(final long delay)
     {
-        //new timer with 1000 milisecond delay
-        this.timer = new Timer(TimerCollection.toNanoSeconds(1000L));
+        //new timer with the specified milisecond delay
+        this.timer = new Timer(TimerCollection.toNanoSeconds(delay));
+    }
+    
+    @Override
+    public void update(final Engine engine)
+    {
+        //the entrance is blocked (Game Over)
+        if (engine.getManager().getBoard().getBlock(START) != null)
+        {
+            this.lose = true;
+            return;
+        }
+        
+        //if our pill has not been created yet 
+        if (getPill() == null)
+            createPill();
+        
+        //update timer
+        getTimer().update(engine.getMain().getTime());
+        
+        //has time passed
+        if (getTimer().hasTimePassed())
+        {
+            //reset Timer
+            getTimer().reset();
+            
+            //apply gravity to the board
+            applyGravity(engine.getManager().getBoard());
+        }
+    }
+    
+    protected void applyGravity(final Board board)
+    {
+        //have we hit the bottom row
+        if (getPill().hasRow(board.getRows() - 1))
+        {
+            //place piece and create new one
+            placePill(board);
+        }
+        else
+        {
+            //move the pill down 1 row
+            getPill().increaseRow();
+
+            //now that the pill moved check for collision
+            if (board.hasCollision(getPill()))
+            {
+                //move the pill back
+                getPill().decreaseRow();
+
+                //place piece and create new one
+                placePill(board);
+            }
+        }
+    }
+    
+    public boolean hasLose()
+    {
+        return this.lose;
+    }
+    
+    /**
+     * Get the Timer for the player
+     * @return Timer
+     */
+    protected Timer getTimer()
+    {
+        return this.timer;
+    }
+    
+    /**
+     * Get the current Pill being used
+     * @return 
+     */
+    protected Pill getPill()
+    {
+        return this.pill;
     }
     
     /**
      * Create a new pill
      */
-    private void createPill()
+    protected void createPill()
     {
         pill = new Pill();
         pill.setStart(START);
-        pill.setDimensions(Board.WIDTH, Board.HEIGHT);
-    }
-    
-    public void update(final Keyboard keyboard, final Board board, final long time)
-    {
-        //the entrance is blocked (Game Over)
-        if (board.getBlock(START) != null)
-            return;
-        
-        //if our pieces have not been created yet 
-        if (pill == null)
-            createPill();
-        
-        //update timer
-        timer.update(time);
-        
-        //if time has passed the blocks need to drop or if the user is forcing the piece to drop
-        if (timer.hasTimePassed() || keyboard.hasKeyPressed(KeyEvent.VK_DOWN))
-        {
-            //remove key released from List
-            keyboard.removeKeyPressed(KeyEvent.VK_DOWN);
-
-            //reset the time
-            timer.reset();
-            
-            //have we hit the bottom row
-            if (pill.hasRow(board.getRows() - 1))
-            {
-                //place piece and create new one
-                placePill(board);
-            }
-            else
-            {
-                //move the pill down 1 row
-                pill.increaseRow();
-                
-                //now that the pill moved check for collision
-                if (board.hasCollision(pill))
-                {
-                    //move the pill back
-                    pill.decreaseRow();
-                    
-                    //place piece and create new one
-                    placePill(board);
-                }
-            }
-        }
-        
-        //the user wants to rotate the pieces
-        if (keyboard.hasKeyPressed(KeyEvent.VK_UP))
-        {
-            keyboard.removeKeyPressed(KeyEvent.VK_UP);
-            
-            //rotate the pill
-            pill.rotate();
-            
-            //check for collision
-            if (board.hasCollision(pill))
-            {
-                //reset the location because of collision
-                pill.reset();
-            }
-        }
-        
-        //move piece to the left
-        if (keyboard.hasKeyPressed(KeyEvent.VK_LEFT))
-        {
-            //move the pill left
-            pill.decreaseCol();
-
-            //now that the blocked moved check for collision
-            if (board.hasCollision(pill))
-            {
-                //move the pill back
-                pill.increaseCol();
-            }
-            
-            keyboard.removeKeyPressed(KeyEvent.VK_LEFT);
-        }
-
-        //move the piece to the right
-        if (keyboard.hasKeyPressed(KeyEvent.VK_RIGHT))
-        {
-            //move the blocks right
-            pill.increaseCol();
-
-            //now that the blocked moved check for collision
-            if (board.hasCollision(pill))
-            {
-                //move the blocks back
-                pill.decreaseCol();
-            }
-            
-            keyboard.removeKeyPressed(KeyEvent.VK_RIGHT);
-        }
-        
-        //set the correct x,y coordinates for the piece
-        board.setLocation(pill);
     }
     
     /**
@@ -144,13 +132,13 @@ public class Player
      * Then after the piece is created create a new Piece
      * @param board The board we will be adding the piece to
      */
-    private void placePill(final Board board)
+    protected void placePill(final Board board)
     {
         //set the x,y coordinates for the piece
-        board.setLocation(pill);
+        getPill().setPosition(board.getX(), board.getY());
         
         //add the Pill to the board
-        board.addPill(pill);
+        board.addPill(getPill());
         
         //now that pieces have been placed create new piece at the top
         createPill();
@@ -158,6 +146,6 @@ public class Player
     
     public void render(final Graphics graphics)
     {
-        pill.render(graphics);
+        getPill().render(graphics);
     }
 }

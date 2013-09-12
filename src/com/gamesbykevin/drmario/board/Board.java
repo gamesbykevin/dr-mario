@@ -20,11 +20,7 @@ public class Board extends Sprite
 {
     //this List will contain all of the blocks on the board
     private Block[][] blocks;
-    
-    //the dimensions of each block
-    public static final int WIDTH = 20;
-    public static final int HEIGHT = 20;
-    
+        
     //the total number of columns and rows in our Board
     private final int cols, rows;
     
@@ -32,7 +28,7 @@ public class Board extends Sprite
     private static final int MATCH_MINIMUM = 4;
     
     //the row to start the virus spawn to give the player some room
-    private static final int SPAWN_START_ROW = 3;
+    private static final int SPAWN_START_ROW = 4;
     
     //the virus count, and progress count
     private final int count;
@@ -46,11 +42,20 @@ public class Board extends Sprite
     //if set to true there are dead pieces and we need to wait for the animation to finish
     private boolean dead = false;
     
+    //once the dead pieces are removed we need to drop any existing pills accordingly
+    private boolean drop = false;
+    
+    //are we done spawning viruses
+    private boolean spawnComplete = false;
+    
     //the timer for determining when the death animation is finished
     private Timer timer;
     
     //the time to show the dead blocks animation
     private static final long DEATH_TIME = TimerCollection.toNanoSeconds(750L);
+    
+    //the time to wait between dropping the Block(s)
+    private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
     
     /**
      * Create a new empty board of the specified columns and rows and to be rendered within the screen.
@@ -93,21 +98,52 @@ public class Board extends Sprite
     }
     
     /**
+     * Are we done spawning viruses
+     * @return boolean
+     */
+    public boolean isSpawnComplete()
+    {
+        return this.spawnComplete;
+    }
+    
+    /**
      * Are any of the blocks currently dead
      * @return boolean
      */
-    public boolean hasDead()
+    private boolean hasDead()
     {
         return this.dead;
+    }
+    
+    /**
+     * Are we in the middle of dropping any single existing blocks
+     * @return 
+     */
+    private boolean hasDrop()
+    {
+        return this.drop;
     }
     
     /**
      * Have all the viruses been created
      * @return boolean
      */
-    public boolean hasSpawnGoal()
+    private boolean hasSpawnGoal()
     {
         return countProgress >= count;
+    }
+    
+    /**
+     * Does the Player have the opportunity to interact with the board.
+     * This will be true if the spawn is complete, there are no dead Block(s)
+     * and no Block(s) are currently dropping.
+     * 
+     * @return boolean
+     */
+    public boolean canInteract()
+    {
+        //if the spawn has completed and no Block(s) are dead and none of the Block(s) are dropping
+        return (isSpawnComplete() && !hasDead() && !hasDrop());
     }
     
     /**
@@ -116,10 +152,13 @@ public class Board extends Sprite
     public void update(final long time)
     {
         //if we haven't reached our goal and there are still spawn locations
-        if (!hasSpawnGoal() && !locations.isEmpty())
+        if (!isSpawnComplete())
         {
             //add virus to board
             spawnVirus();
+            
+            //if we have reached our limit or no more spawn locations the spawn is complete
+            this.spawnComplete = (hasSpawnGoal() || locations.isEmpty());
         }
         else
         {
@@ -140,14 +179,171 @@ public class Board extends Sprite
                     
                     //remove any existing dead pieces
                     removeDead();
+                    
+                    //now that the dead pieces have been removed we need to drop the extra Block(s)
+                    this.drop = true;
+                    
+                    //set the timer for the drop time
+                    timer.setReset(DROP_TIME);
+                    timer.reset();
                 }
             }
             else
             {
+                
+                if (hasDrop())
+                {
+                    //update timer
+                    timer.update(time);
+                    
+                    checkDrop();
+                }
+                
                 //check the pieces on the board for a match
                 checkMatch();
             }
         }
+    }
+    
+    /**
+     * Apply gravity to any separate hanging Block(s)
+     */
+    private void checkDrop()
+    {
+        //time has passed to make the next drop
+        if (timer.hasTimePassed())
+        {
+            timer.reset();
+            
+            //are we finished dropping Block(s)
+            boolean finish = true;
+            
+            //start on the second to last row and go backwards
+            for (int row=rows - 2; row >= 0; row--)
+            {
+                for (int col=0; col < cols; col++)
+                {
+                    final Block tmp = getBlock(col, row);
+                    
+                    //if the block does not exist no need to check or if it is already dead
+                    if (tmp == null)
+                        continue;
+                    
+                    //we are only dropping pills so skip if other
+                    if (!Pill.isPill(tmp))
+                        continue;
+                    
+                    //if the Block below is a virus we can't drop because the viruses don't drop
+                    if (getBlock(col, row + 1) != null && Virus.isVirus(getBlock(col, row + 1)))
+                        continue;
+                    
+                    // the block below the current does not exist so we will need to check if it needs to be dropped
+                    if (getBlock(col, row + 1) == null)
+                    {
+                        //get the Block to the west and east
+                        final Block west = getBlock(col - 1, row);
+                        final Block east = getBlock(col + 1, row);
+
+                        //if there is no connecting piece to the east or west it will be dropped
+                        if (west == null && east == null)
+                        {
+                            //apply Gravity to specific Block
+                            applyGravity(col, row, tmp);
+                            
+                            //we have altered a Block so we are not finished
+                            finish = false;
+                        }
+                        else
+                        {
+                            boolean westMember = false;
+                            boolean eastMember = false;
+                            
+                            //if a west Block exists
+                            if (west != null)
+                            {
+                                //is the west Block part of the current Block
+                                westMember = (west.getGroup() == tmp.getGroup());
+                                
+                                //is the west Block part of the current Block
+                                if (westMember)
+                                {
+                                    //the west Block does not have anchor below it
+                                    if (getBlock(west.getCol(), west.getRow() + 1) == null)
+                                    {
+                                        //apply Gravity to specific Block
+                                        applyGravity(col, row, tmp);
+
+                                        //we have altered a Block so we are not finished
+                                        finish = false;
+                                    }
+                                }
+                            }
+                            
+                            //if an east Block exists
+                            if (east != null)
+                            {
+                                //is the east Block part of the current Block
+                                eastMember = (east.getGroup() == tmp.getGroup());
+                                
+                                //is the east Block part of the current Block
+                                if (eastMember)
+                                {
+                                    //the east Block does not have anchor below it
+                                    if (getBlock(east.getCol(), east.getRow() + 1) == null)
+                                    {
+                                        //apply Gravity to specific Block
+                                        applyGravity(col, row, tmp);
+
+                                        //we have altered a Block so we are not finished
+                                        finish = false;
+                                    }
+                                }
+                            }
+                            
+                            //if the neighbors exist but are not part of the same group we can drop
+                            if (!westMember && !eastMember)
+                            {
+                                //apply Gravity to specific Block
+                                applyGravity(col, row, tmp);
+
+                                //we have altered a Block so we are not finished
+                                finish = false;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            //if no changes were made, stop checking the drop
+            if (finish)
+            {
+                drop = false;
+            }
+        }
+    }
+    
+    /**
+     * Applies gravity to the specified block.
+     * We will remove the block from the array at the specified col/row position
+     * and then apply it to its new location specified by block.getCol(), block.getRow().
+     * 
+     * @param col The column we want to remove the current Block from
+     * @param row The row we want to remove the current Block from
+     * @param block The Block we are re-positioning that contains the new col/row values
+     */
+    private void applyGravity(final int col, final int row, final Block block)
+    {
+        //drop Block down 1 row
+        block.increaseRow();
+
+        //update x, y coordinates
+        block.setPosition(getX(), getY());
+
+        //set the block to be in the correct location in the array
+        setBlock(block.getCell(), block);
+
+        //remove the block from the current position in the array
+        removeBlock(col, row);
     }
     
     private void removeDead()
@@ -156,7 +352,7 @@ public class Board extends Sprite
         {
             for (int col=0; col < cols; col++)
             {
-                if (blocks[row][col] != null && blocks[row][col].isDead())
+                if (getBlock(col, row) != null && getBlock(col, row).isDead())
                 {
                     blocks[row][col] = null;
                 }
@@ -180,7 +376,7 @@ public class Board extends Sprite
         virus.setRow(tmp);
 
         //update the virus to be at the given location
-        setLocation(virus);
+        virus.setPosition(getX(), getY());
 
         //set the virus on the board
         blocks[tmp.getRow()][tmp.getCol()] = virus;
@@ -207,24 +403,24 @@ public class Board extends Sprite
                 //get the block type
                 final Type tmpType = block.getType();
 
-                //start at the current position and head east checking for all matching
-                checkMatchEast(col, row, tmpType);
+                //make sure we aren't soo close that there is no way we will make a match
+                if (col <= cols - MATCH_MINIMUM)
+                {
+                    //start at the current position and head east checking for all matching
+                    checkConsecutiveMatch(col, cols, row, tmpType, true);
+                }
                 
-                //start at the current position and head south checking for all matching
-                checkMatchSouth(col, row, tmpType);
+                //make sure we aren't soo close that there is no way we will make a match
+                if (row <= rows - MATCH_MINIMUM)
+                {
+                    //start at the current position and head south checking for all matching
+                    checkConsecutiveMatch(row, rows, col, tmpType, false);
+                }
             }
         }
     }
     
-    /**
-     * Starting at the given col, row go south and check if the board blocks match of tmpType.
-     * If a match is found the group will be marked as dead
-     * 
-     * @param col
-     * @param row
-     * @param tmpType 
-     */
-    private void checkMatchSouth(final int col, final int row, final Type tmpType)
+    private void checkConsecutiveMatch(final int start, final int finish, final int staticDimension, final Type tmpType, final boolean horizontal)
     {
         //the number of matching blocks, start at 1 for the current location
         int matchCount = 1;
@@ -232,92 +428,57 @@ public class Board extends Sprite
         //temporary block object
         Block tmpBlock;
         
-        //make sure we aren't soo close that there is no way we will make a match
-        if (row <= rows - MATCH_MINIMUM + 1)
+        //from the next position check the rest for match going south
+        for (int begin=start+1; begin < finish; begin++)
         {
-            //from the next position check the rest for match going south
-            for (int start=row+1; start < rows; start++)
+            //if moving horizontal
+            if (horizontal)
             {
-                tmpBlock = getBlock(col, start);
-
-                boolean match = (tmpBlock != null && tmpBlock.hasMatch(tmpType));
-
-                if (match)
-                    matchCount++;
-
-                //if the block does not exist or the type does not match or the last row
-                if (tmpBlock == null || !match || start == rows - 1)
-                {
-                    //make sure we made the minimum requirements
-                    if (matchCount >= MATCH_MINIMUM)
-                    {
-                        //remove all of the blocks
-                        if (start == rows - 1 && match)
-                        {
-                            markDead(row, start, col, false);
-                        }
-                        else
-                        {
-                            markDead(row, start - 1, col, false);
-                        }
-                    }
-
-                    //exit the loop and check the next column
-                    break;
-                }
+                tmpBlock = getBlock(begin, staticDimension);
             }
-        }
-    }
-    
-    /**
-     * Starting at the given col, row go east and check if the board blocks match of tmpType.
-     * If a match is found the group will be marked as dead
-     * 
-     * @param col
-     * @param row
-     * @param tmpType 
-     */
-    private void checkMatchEast(final int col, final int row, final Type tmpType)
-    {
-        //the number of matching blocks, start at 1 for the current location
-        int matchCount = 1;
-        
-        //temporary block object
-        Block tmpBlock;
-        
-        //make sure we aren't soo close that there is no way we will make a match
-        if (col <= cols - MATCH_MINIMUM + 1)
-        {
-            //from the next position check the rest for match going east
-            for (int start=col+1; start < cols; start++)
+            else
             {
-                tmpBlock = getBlock(start, row);
+                tmpBlock = getBlock(staticDimension, begin);
+            }
 
-                boolean match = (tmpBlock != null && tmpBlock.hasMatch(tmpType));
+            boolean match = (tmpBlock != null && tmpBlock.hasMatch(tmpType));
 
-                if (match)
-                    matchCount++;
+            if (match)
+                matchCount++;
 
-                //if the block does not exist or the type does not match or the last column
-                if (tmpBlock == null || !match || start == cols - 1)
+            //if the block does not exist or the type does not match or the last row
+            if (tmpBlock == null || !match || begin == rows - 1)
+            {
+                //make sure we made the minimum requirements
+                if (matchCount >= MATCH_MINIMUM)
                 {
-                    //make sure we made the minimum requirements
-                    if (matchCount >= MATCH_MINIMUM)
+                    //remove all of the blocks
+                    if (begin == finish - 1 && match)
                     {
-                        //remove all of the blocks
-                        if (start == cols - 1 && match)
+                        if (horizontal)
                         {
-                            markDead(col, start, row, true);
+                            markDead(start, begin, staticDimension, true);
                         }
                         else
                         {
-                            markDead(col, start - 1, row, true);
+                            markDead(start, begin, staticDimension, false);
                         }
                     }
-
-                    //exit the loop and check the next column
-                    break;
+                    else
+                    {
+                        if (horizontal)
+                        {
+                            markDead(start, begin - 1, staticDimension, true);
+                        }
+                        else
+                        {
+                            markDead(start, begin - 1, staticDimension, false);
+                        }
+                    }
                 }
+
+                //exit the loop and check next
+                break;
             }
         }
     }
@@ -338,6 +499,7 @@ public class Board extends Sprite
         {
             hasPill = (east) ? (blocks[dimension][current] != null && Pill.isPill(blocks[dimension][current].getType())) : (blocks[current][dimension] != null && Pill.isPill(blocks[current][dimension].getType()));
             
+            //if there is at least 1 pill we can skip checking the rest
             if (hasPill)
                 break;
         }
@@ -347,6 +509,10 @@ public class Board extends Sprite
         {
             //dead will be true since we are marking blocks dead
             this.dead = true;
+            
+            //set the time limit to the death time and reset the timer
+            this.timer.setReset(DEATH_TIME);
+            this.timer.reset();
             
             for (int current = start; current <= end; current++)
             {
@@ -366,18 +532,39 @@ public class Board extends Sprite
     
     /**
      * Get the block of the specified column, row
+     * If the col/row is out of bounds null will be returned
      * @param col Column
      * @param row Row
-     * @return Block
+     * @return Block, null will be returned if the col/row is out of bounds
      */
     public Block getBlock(final int col, final int row)
     {
+        if (col < 0 || col > blocks[0].length - 1)
+            return null;
+        if (row < 0 || row > blocks.length - 1)
+            return null;
+        
         return blocks[row][col];
     }
     
     public Block getBlock(final Cell cell)
     {
         return getBlock(cell.getCol(), cell.getRow());
+    }
+    
+    private void removeBlock(final int col, final int row)
+    {
+        blocks[row][col] = null;
+    }
+    
+    private void setBlock(final Cell cell, final Block block)
+    {
+        setBlock(cell.getCol(), cell.getRow(), block);
+    }
+    
+    private void setBlock(final int col, final int row, final Block block)
+    {
+        blocks[row][col] = block;
     }
     
     /**
@@ -396,26 +583,6 @@ public class Board extends Sprite
     public int getRows()
     {
         return this.rows;
-    }
-    
-    public void setLocation(final Pill pill)
-    {
-        setLocation((Block)pill);
-        setLocation(pill.getExtra());
-    }
-    
-    /**
-     * Set the proper block location/dimensions
-     * @param block The block we want to set
-     */
-    public void setLocation(final Block block)
-    {
-        final int x = (int)(super.getX() + (block.getCol() * WIDTH));
-        final int y = (int)(super.getY() + (block.getRow() * HEIGHT));
-
-        //set the appropriate location and dimensions
-        block.setLocation(x, y);
-        block.setDimensions(WIDTH, HEIGHT);
     }
     
     public boolean hasCollision(final Pill pill)

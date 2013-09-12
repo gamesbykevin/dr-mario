@@ -1,8 +1,8 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Sprite;
-import java.awt.Color;
 
+import java.awt.Color;
 import java.awt.Graphics;
 
 /**
@@ -33,11 +33,35 @@ public class Block extends Sprite
     //the group will be a way to tell if multiple Block(s) are part of one
     private long group = System.nanoTime();
     
+    //the dimensions of each block
+    protected static final int WIDTH = 20;
+    protected static final int HEIGHT = 20;
+    
     public Block(final Block block)
     {
         super(block);
         
+        //the Type of Block. Pill, Virus, etc..
         this.type = block.getType();
+        
+        //remember the group as well so we know which Block(s) are connected
+        setGroup(block.getGroup());
+        
+        //set the dimensions of the Block
+        super.setDimensions(WIDTH, HEIGHT);
+    }
+    
+    /**
+     * Sets the correct x,y location based on the row/col width/height
+     */
+    public void setPosition(final double startX, final double startY)
+    {
+        final int x = (int)(startX + (getCol() * WIDTH));
+        final int y = (int)(startY + (getRow() * HEIGHT));
+
+        //set the appropriate location and dimensions
+        setLocation(x, y);
+        setDimensions(WIDTH, HEIGHT);
     }
     
     public Block(final Type type)
@@ -45,11 +69,19 @@ public class Block extends Sprite
         this.type = type;
     }
     
+    /**
+     * Get the group this Block is associated with
+     * @return long
+     */
     public long getGroup()
     {
         return this.group;
     }
     
+    /**
+     * Set the group so we know the other Block(s) that belong to this one
+     * @param group 
+     */
     public void setGroup(final long group)
     {
         this.group = group;

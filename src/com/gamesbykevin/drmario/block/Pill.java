@@ -12,7 +12,7 @@ import java.util.List;
  * The pills used in the game to cure the virus
  * @author GOD
  */
-public class Pill extends Block
+public class Pill extends Block 
 {
     //a Pill consists of 2 Blocks
     private Block extra;
@@ -22,14 +22,18 @@ public class Pill extends Block
     
     public Pill()
     {
-        super(getRandomPill());
+        super(getRandom());
         
         //create new Block since a Pill constists of 2 Block(s)
-        extra = new Block(getRandomPill());
+        extra = new Block(getRandom());
         
         //make extra Block part of the same group so we know they are one
         extra.setGroup(super.getGroup());
-        
+    }
+    
+    public static boolean isPill(final Block block)
+    {
+        return (isPill(block.getType()));
     }
     
     public Block getExtra()
@@ -64,6 +68,16 @@ public class Pill extends Block
     {
         super.decreaseCol();
         extra.decreaseCol();
+    }
+    
+    /**
+     * Set the appropriate position for the Block(s) based on their col/row
+     */
+    @Override
+    public void setPosition(final double startX, final double startY)
+    {
+        super.setPosition(startX, startY);
+        extra.setPosition(startX, startY);
     }
     
     /**
@@ -103,7 +117,7 @@ public class Pill extends Block
         return (getRow() == row || extra.getRow() == row);
     }
     
-    public static Type getRandomPill()
+    public static Type getRandom()
     {
         List<Type> types = new ArrayList<>();
         
