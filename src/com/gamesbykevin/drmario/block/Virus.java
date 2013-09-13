@@ -34,6 +34,11 @@ public class Virus extends Block
         return (isVirus(block.getType()));
     }
     
+    /**
+     * Here lies the logic to determine if the Block is a Virus
+     * @param type The type of Block
+     * @return boolean Return true if type is one of the following (RedVirus, BlueVirus, YellowVirus)
+     */
     public static boolean isVirus(final Type type)
     {
         switch(type)

@@ -20,6 +20,17 @@ public class Pill extends Block
     //this will contain the previous location should we rotate Pill
     private Cell previous;
     
+    /**
+     * The different rotations of each Pill
+     */
+    public enum Rotation
+    {
+        East, South, West, North
+    }
+    
+    //which rotation are we currently at
+    private int rotationIndex;
+    
     public Pill()
     {
         super(getRandom());
@@ -29,6 +40,14 @@ public class Pill extends Block
         
         //make extra Block part of the same group so we know they are one
         extra.setGroup(super.getGroup());
+        
+        //we start with the Pill facing East
+        this.rotationIndex = 0;
+    }
+    
+    public Rotation getRotation()
+    {
+        return Rotation.values()[rotationIndex];
     }
     
     public static boolean isPill(final Block block)
@@ -107,6 +126,24 @@ public class Pill extends Block
         extra.setDimensions(width, height);
     }
     
+    @Override
+    public void setCol(final int col)
+    {
+        final int difference = super.getCol() - extra.getCol();
+        
+        super.setCol(col);
+        extra.setCol(col - difference);
+    }
+    
+    @Override
+    public void setRow(final int row)
+    {
+        final int difference = super.getRow() - extra.getRow();
+        
+        super.setRow(row);
+        extra.setRow(row - difference);
+    }
+    
     /**
      * Does the pill have a Block that has the same row as parameter row
      * @param row The row we want to see if it matches
@@ -153,17 +190,54 @@ public class Pill extends Block
         //translate piece back
         extra.setCol(getCol() + extra.getCol());
         extra.setRow(getRow() + extra.getRow());
+        
+        //move to the next rotation
+        rotationIndex++;
+        
+        //keep the rotation in bounds
+        if (rotationIndex >= Rotation.values().length)
+            rotationIndex = 0;
     }
     
     /**
-     * Set the position back to the previous
+     * Set the position back to the previous rotation
      */
-    public void reset()
+    public void rewind()
     {
         extra.setCol(previous);
         extra.setRow(previous);
+        
+        //move to the previous rotation
+        rotationIndex--;
+        
+        //keep the rotation in bounds
+        if (rotationIndex < 0)
+            rotationIndex = Rotation.values().length - 1;
     }
     
+    /**
+     * Reset the Pill back to its original direction, which is facing east
+     */
+    public void reset()
+    {
+        //east is the original rotation
+        setRotation(Rotation.East);
+    }
+    
+    public void setRotation(final Rotation rotation)
+    {
+        //continue to rotate until we have reached our goal
+        while (Rotation.values()[this.rotationIndex] != rotation)
+        {
+            rotate();
+        }
+    }
+    
+    /**
+     * Here lies the logic to determine if the Block is a Pill
+     * @param type The type of Block
+     * @return boolean Return true if type is one of the following (RedPill, BluePill, YellowPill)
+     */
     public static boolean isPill(final Type type)
     {
         switch(type)

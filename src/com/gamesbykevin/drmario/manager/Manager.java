@@ -1,5 +1,6 @@
 package com.gamesbykevin.drmario.manager;
 
+import com.gamesbykevin.drmario.player.Agent;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
 import com.gamesbykevin.drmario.player.Human;
@@ -19,6 +20,9 @@ public final class Manager implements IManager
     //the player and the Pill the Player will control
     private Human player;
     
+    //our AI competitor
+    private Agent agent;
+    
     //the dimensions for the board
     private static final int COLUMNS = 8;
     private static final int ROWS = 16;
@@ -29,7 +33,8 @@ public final class Manager implements IManager
     {
         board = new Board(new Rectangle(50,25, 160, 320), COLUMNS, ROWS, virusCount);
         
-        player = new Human(1500);
+        //player = new Human(1500);
+        agent = new Agent(500);
     }
     
     public Board getBoard()
@@ -61,8 +66,17 @@ public final class Manager implements IManager
         //if we have the opportunity to interact with the board check Player input
         if (board.canInteract())
         {
-            //check for keyboard input etc..
-            player.update(engine);
+            if (player != null)
+            {
+                //check for keyboard input etc..
+                player.update(engine);
+            }
+            
+            if (agent != null)
+            {
+                //execute ai logic
+                agent.update(engine);
+            }
         }
     }
     
@@ -79,8 +93,17 @@ public final class Manager implements IManager
         //if we have the opportunity to interact with the board draw the Player Pill
         if (board.canInteract())
         {
-            //draw the player's current pieces
-            player.render(graphics);
+            if (player != null)
+            {
+                //draw the player's current Pill
+                player.render(graphics);
+            }
+            
+            if (agent != null)
+            {
+                //draw the AI's current Pill
+                agent.render(graphics);
+            }
         }
     }
 }

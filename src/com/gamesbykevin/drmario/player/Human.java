@@ -21,6 +21,7 @@ public final class Human extends Player implements IPlayer
     @Override
     public void update(final Engine engine)
     {
+        //if the player has lost no more updates required
         if (hasLose())
             return;
         
@@ -51,7 +52,7 @@ public final class Human extends Player implements IPlayer
             if (engine.getManager().getBoard().hasCollision(getPill()))
             {
                 //reset the location because of collision
-                getPill().reset();
+                getPill().rewind();
             }
         }
         
@@ -88,6 +89,9 @@ public final class Human extends Player implements IPlayer
         }
         
         //set the correct x,y coordinates for the pill
-        getPill().setPosition(engine.getManager().getBoard().getX(), engine.getManager().getBoard().getY());
+        if (getPill() != null)
+        {
+            getPill().setPosition(engine.getManager().getBoard().getX(), engine.getManager().getBoard().getY());
+        }
     }
 }

@@ -20,7 +20,13 @@ public class Board extends Sprite
 {
     //this List will contain all of the blocks on the board
     private Block[][] blocks;
-        
+    
+    //if any blocks need to be marked as dead they will be contained in here
+    private List<Block> deadBlocks;
+    
+    //our temporary List of dead Block(s)
+    private List<Block> deadBlocksTmp;
+    
     //the total number of columns and rows in our Board
     private final int cols, rows;
     
@@ -38,9 +44,6 @@ public class Board extends Sprite
     
     //the spawn locations for the viruses
     private List<Cell> locations;
-    
-    //if set to true there are dead pieces and we need to wait for the animation to finish
-    private boolean dead = false;
     
     //once the dead pieces are removed we need to drop any existing pills accordingly
     private boolean drop = false;
@@ -95,6 +98,12 @@ public class Board extends Sprite
                 locations.add(new Cell(col, row));
             }
         }
+        
+        //create an empty List that will contain our dead Block(s)
+        this.deadBlocks = new ArrayList<>();
+        
+        //create an empty List that will contain our temporary dead Block(s)
+        this.deadBlocksTmp = new ArrayList<>();
     }
     
     /**
@@ -112,7 +121,7 @@ public class Board extends Sprite
      */
     private boolean hasDead()
     {
-        return this.dead;
+        return (!deadBlocks.isEmpty());
     }
     
     /**
@@ -174,9 +183,6 @@ public class Board extends Sprite
                     //reset timer
                     timer.reset();
                     
-                    //pieces are no longer dead
-                    this.dead = false;
-                    
                     //remove any existing dead pieces
                     removeDead();
                     
@@ -199,8 +205,31 @@ public class Board extends Sprite
                     checkDrop();
                 }
                 
-                //check the pieces on the board for a match
+                //clear the List before we check again
+                deadBlocksTmp.clear();
+                
+                //create a List of Block(s) that match
                 checkMatch();
+                
+                //were any dead Block(s) found
+                if (deadBlocksTmp.size() > 0)
+                {
+                    //set the time limit to the death time and reset the timer
+                    this.timer.setReset(DEATH_TIME);
+                    this.timer.reset();
+
+                    //mark all found as dead
+                    for (Block tmpBlock : deadBlocksTmp)
+                    {
+                        //mark the Block as dead
+                        getBlock(tmpBlock).setDead(true);
+
+                        //now add it to the official dead List
+                        deadBlocks.add(getBlock(tmpBlock));
+                    }
+                }
+                
+                
             }
         }
     }
@@ -346,18 +375,18 @@ public class Board extends Sprite
         removeBlock(col, row);
     }
     
+    /**
+     * Remove any dead Block(s) in our List
+     */
     private void removeDead()
     {
-        for (int row=0; row < rows; row++)
+        for (Block block : deadBlocks)
         {
-            for (int col=0; col < cols; col++)
-            {
-                if (getBlock(col, row) != null && getBlock(col, row).isDead())
-                {
-                    blocks[row][col] = null;
-                }
-            }
+            removeBlock(block.getCol(), block.getRow());
         }
+        
+        //clear List
+        deadBlocks.clear();
     }
     
     private void spawnVirus()
@@ -379,7 +408,7 @@ public class Board extends Sprite
         virus.setPosition(getX(), getY());
 
         //set the virus on the board
-        blocks[tmp.getRow()][tmp.getCol()] = virus;
+        setBlock(tmp.getCol(), tmp.getRow(), virus);
 
         //remove location from list so we don't pick it again
         locations.remove(index);
@@ -388,7 +417,7 @@ public class Board extends Sprite
         countProgress++;
     }
     
-    private void checkMatch()
+    public List<Block> checkMatch()
     {
         for (int row=0; row < rows; row++)
         {
@@ -418,8 +447,20 @@ public class Board extends Sprite
                 }
             }
         }
+        
+        return deadBlocksTmp;
     }
     
+    /**
+     * Here we will check a number of Block(s) from a start to finish location 
+     * going in a certain direction checking for a match of Block.Type 
+     * 
+     * @param start The start row or column
+     * @param finish The end row or column
+     * @param staticDimension Either the row or column that will not change while testing
+     * @param tmpType The type of Block we are looking for a match.
+     * @param horizontal If true we will test going east. If false we will test going south.
+     */
     private void checkConsecutiveMatch(final int start, final int finish, final int staticDimension, final Type tmpType, final boolean horizontal)
     {
         //the number of matching blocks, start at 1 for the current location
@@ -443,6 +484,7 @@ public class Board extends Sprite
 
             boolean match = (tmpBlock != null && tmpBlock.hasMatch(tmpType));
 
+            //if there is a match increase the count
             if (match)
                 matchCount++;
 
@@ -452,28 +494,18 @@ public class Board extends Sprite
                 //make sure we made the minimum requirements
                 if (matchCount >= MATCH_MINIMUM)
                 {
-                    //remove all of the blocks
+                    //if we have a match or at the finish line
                     if (begin == finish - 1 && match)
                     {
-                        if (horizontal)
-                        {
-                            markDead(start, begin, staticDimension, true);
-                        }
-                        else
-                        {
-                            markDead(start, begin, staticDimension, false);
-                        }
+                        //locate all of the dead blocks from start to finish going in the specified direction
+                        verifyDead(start, begin, staticDimension, horizontal);
                     }
                     else
                     {
-                        if (horizontal)
-                        {
-                            markDead(start, begin - 1, staticDimension, true);
-                        }
-                        else
-                        {
-                            markDead(start, begin - 1, staticDimension, false);
-                        }
+                        //no match so we go back 1 cell for the finish location
+                        
+                        //locate all of the dead blocks from start to finish going in the specified direction
+                        verifyDead(start, begin - 1, staticDimension, horizontal);
                     }
                 }
 
@@ -484,47 +516,54 @@ public class Board extends Sprite
     }
     
     /**
-     * Mark a number of blocks dead with the given parameters and in the given direction
-     * @param start The start position
-     * @param end The end position
-     * @param dimension Either the row or column that won't change
-     * @param east Are we heading east, if false then we are heading south
+     * Here we will make sure that the match has at least 1 Pill and the results will be returned in a List.
+     * 
+     * @param start The start of our check
+     * @param end The end of our check
+     * @param dimension The static column or row that will not change
+     * @param horizontal If true we will check going east. If false we will check going south
+     * @return List of Blocks that are dead
      */
-    private void markDead(final int start, final int end, final int dimension, final boolean east)
+    private void verifyDead(final int start, final int end, final int staticDimension, final boolean horizontal)
     {
+        //in order for the match to be confirmed at least one of the Block(s) in question have to be a Pill
         boolean hasPill = false;
         
         //in order for the viruses to be removed at least one of the blocks has to be a pill
         for (int current = start; current <= end; current++)
         {
-            hasPill = (east) ? (blocks[dimension][current] != null && Pill.isPill(blocks[dimension][current].getType())) : (blocks[current][dimension] != null && Pill.isPill(blocks[current][dimension].getType()));
+            Block tmp;
+            
+            if (horizontal)
+            {
+                tmp = getBlock(current, staticDimension);
+            }
+            else
+            {
+                tmp = getBlock(staticDimension, current);
+            }
+            
+            hasPill = Pill.isPill(tmp.getType());
             
             //if there is at least 1 pill we can skip checking the rest
             if (hasPill)
                 break;
         }
         
-        //of all the matching blocks at least 1 has to be a pill
+        //of all the Block(s) that match at least 1 has to be a pill
         if (hasPill)
         {
-            //dead will be true since we are marking blocks dead
-            this.dead = true;
-            
-            //set the time limit to the death time and reset the timer
-            this.timer.setReset(DEATH_TIME);
-            this.timer.reset();
-            
             for (int current = start; current <= end; current++)
             {
-                //if we are heading east the column will be what is changed
-                if (east)
+                //if we are heading east the column will be the variable
+                if (horizontal)
                 {
-                    blocks[dimension][current].setDead(true);
+                    deadBlocksTmp.add(getBlock(current, staticDimension));
                 }
                 else
                 {
-                    //we are heading sound and the row will be the variable
-                    blocks[current][dimension].setDead(true);
+                    //we are heading south and the row will be the variable
+                    deadBlocksTmp.add(getBlock(staticDimension, current));
                 }
             }
         }
@@ -547,12 +586,23 @@ public class Board extends Sprite
         return blocks[row][col];
     }
     
+    public Block getBlock(final Block block)
+    {
+        return getBlock(block.getCol(), block.getRow());
+    }
+    
     public Block getBlock(final Cell cell)
     {
         return getBlock(cell.getCol(), cell.getRow());
     }
     
-    private void removeBlock(final int col, final int row)
+    public void removeBlock(final Pill pill)
+    {
+        removeBlock(pill.getCol(), pill.getRow());
+        removeBlock(pill.getExtra().getCol(), pill.getExtra().getRow());
+    }
+    
+    public void removeBlock(final int col, final int row)
     {
         blocks[row][col] = null;
     }
@@ -587,15 +637,16 @@ public class Board extends Sprite
     
     public boolean hasCollision(final Pill pill)
     {
-        return (hasCollision((Block)pill) || hasCollision(pill.getExtra()));
+        return (hasCollision((Block)pill) || hasCollision((Block)pill.getExtra()));
     }
     
     /**
      * Check if the given Block collides with any of the Blocks on our board.
-     * Will return true if an existing block is at the same spot or if the given block is out of bounds.
+     * Will return true if an existing block is at the same spot or if the 
+     * parameter block is out of bounds.
      * 
      * @param block The Block we want to check for collision
-     * @return boolean Return true if the Block euqals any of the existing Block(s) on the board
+     * @return boolean Return true if the Block euqals any of the existing Block(s) on the board or if out of bounds
      */
     private boolean hasCollision(final Block block)
     {
@@ -606,7 +657,7 @@ public class Board extends Sprite
             return true;
         
         //if an object exists then there is a collision
-        if (blocks[block.getRow()][block.getCol()] != null)
+        if (getBlock(block) != null)
             return true;
         
         return false;
@@ -618,8 +669,8 @@ public class Board extends Sprite
      */
     public void addPill(final Pill pill)
     {
-        blocks[pill.getRow()][pill.getCol()] = new Block(pill);
-        blocks[pill.getExtra().getRow()][pill.getExtra().getCol()] = new Block(pill.getExtra());
+        setBlock(pill.getCol(), pill.getRow(), new Block(pill));
+        setBlock(pill.getExtra().getCol(), pill.getExtra().getRow(), new Block(pill.getExtra()));
     }
     
     public void render(Graphics graphics)
@@ -633,8 +684,8 @@ public class Board extends Sprite
             for (int col=0; col < cols; col++)
             {
                 //draw the blocks that exist
-                if (blocks[row][col] != null)
-                    blocks[row][col].render(graphics);
+                if (getBlock(col, row) != null)
+                    getBlock(col, row).render(graphics);
             }
         }
     }
