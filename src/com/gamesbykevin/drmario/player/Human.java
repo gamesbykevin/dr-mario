@@ -27,6 +27,10 @@ public final class Human extends Player implements IPlayer
         
         super.update(engine);
         
+        //if the Pill does not exist we don't need to worry about keyboard input
+        if (getPill() == null)
+            return;
+        
         //if time has passed the blocks need to drop or if the user is forcing the piece to drop
         if (getTimer().hasTimePassed() || engine.getKeyboard().hasKeyPressed(KeyEvent.VK_DOWN))
         {

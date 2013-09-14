@@ -27,14 +27,14 @@ public final class Manager implements IManager
     private static final int COLUMNS = 8;
     private static final int ROWS = 16;
     
-    private int virusCount = 45;
+    private int virusCount = 10;
     
     public Manager(final Engine engine) throws Exception
     {
         board = new Board(new Rectangle(50,25, 160, 320), COLUMNS, ROWS, virusCount);
         
         //player = new Human(1500);
-        agent = new Agent(500);
+        agent = new Agent(1000, 250);
     }
     
     public Board getBoard()

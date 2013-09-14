@@ -104,8 +104,8 @@ public class Player implements IPlayer
         //have we hit the bottom row
         if (getPill().hasRow(board.getRows() - 1))
         {
-            //place piece and create new one
-            placePill(board);
+            //place Pill
+            board.addPill(getPill());
             
             //now that pill has been placed remove it
             removePill();
@@ -124,8 +124,8 @@ public class Player implements IPlayer
                 //move the pill back
                 getPill().decreaseRow();
 
-                //place piece and create new one
-                placePill(board);
+                //place Pill
+                board.addPill(getPill());
                 
                 //now that Pill has been placed remove it
                 removePill();
@@ -166,20 +166,6 @@ public class Player implements IPlayer
     {
         pill = new Pill();
         pill.setStart(START);
-    }
-    
-    /**
-     * Place the piece on the board. 
-     * Then after the piece is created create a new Piece
-     * @param board The board we will be adding the piece to
-     */
-    protected void placePill(final Board board)
-    {
-        //set the x,y coordinates for the piece
-        getPill().setPosition(board.getX(), board.getY());
-        
-        //add the Pill to the board
-        board.addPill(getPill());
     }
     
     protected void removePill()

@@ -34,7 +34,7 @@ public class Board extends Sprite
     private static final int MATCH_MINIMUM = 4;
     
     //the row to start the virus spawn to give the player some room
-    private static final int SPAWN_START_ROW = 4;
+    private static final int SPAWN_START_ROW = 5;
     
     //the virus count, and progress count
     private final int count;
@@ -489,7 +489,7 @@ public class Board extends Sprite
                 matchCount++;
 
             //if the block does not exist or the type does not match or the last row
-            if (tmpBlock == null || !match || begin == rows - 1)
+            if (tmpBlock == null || !match || begin == finish - 1)
             {
                 //make sure we made the minimum requirements
                 if (matchCount >= MATCH_MINIMUM)
@@ -502,8 +502,6 @@ public class Board extends Sprite
                     }
                     else
                     {
-                        //no match so we go back 1 cell for the finish location
-                        
                         //locate all of the dead blocks from start to finish going in the specified direction
                         verifyDead(start, begin - 1, staticDimension, horizontal);
                     }
@@ -669,6 +667,10 @@ public class Board extends Sprite
      */
     public void addPill(final Pill pill)
     {
+        //correct the x,y coordinates
+        pill.setPosition(getX(), getY());
+        
+        //add the Block(s) to the board
         setBlock(pill.getCol(), pill.getRow(), new Block(pill));
         setBlock(pill.getExtra().getCol(), pill.getExtra().getRow(), new Block(pill.getExtra()));
     }

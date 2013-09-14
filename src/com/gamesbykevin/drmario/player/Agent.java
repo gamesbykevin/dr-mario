@@ -1,5 +1,8 @@
 package com.gamesbykevin.drmario.player;
 
+import com.gamesbykevin.framework.util.Timer;
+import com.gamesbykevin.framework.util.TimerCollection;
+
 import com.gamesbykevin.drmario.block.Block;
 import com.gamesbykevin.drmario.block.Pill.Rotation;
 import com.gamesbykevin.drmario.block.Virus;
@@ -14,9 +17,45 @@ import java.util.List;
  */
 public final class Agent extends Player implements IPlayer
 {
-    public Agent(final long delay)
+    //score to add for every virus kill
+    private static final int SCORE_VIRUS_KILL = 1000;
+    
+    //score to add for every pill kill
+    private static final int SCORE_PILL_KILL = 75;
+    
+    //score to add when adding pill on top of matching virus
+    private static final int SCORE_VIRUS_MATCH = 150;
+    
+    //score to add when adding pill on top of matching pill
+    private static final int SCORE_BLOCK_MATCH = 100;
+    
+    //score to deduct when placing pill on top of non-matching virus
+    private static final int SCORE_VIRUS_NO_MATCH = -250;
+    
+    //score to deduct when placing pill on top of non-matching pill
+    private static final int SCORE_BLOCK_NO_MATCH = -100;
+    
+    //score if no match and no Block below
+    private static final int SCORE_NO_MATCH_EMPTY = 15;
+    
+    //score if placing block in an unreachable position
+    private static final int SCORE_NO_POSITION = -200;
+    
+    //when both Block(s) in the Pill are in the same column and match
+    private static final int SCORE_SAME_COLUMN_MATCH = 20;
+    
+    //when both Block(s) in the Pill are in the same column and they don't match
+    private static final int SCORE_SAME_COLUMN_NO_MATCH = -20;
+    
+    //the Timer that determines when the Agent can move
+    private Timer timer;
+    
+    public Agent(final long delay, final long moveDelay)
     {
         super(delay);
+        
+        //create a new Timer that calculates the delay between each move
+        this.timer = new Timer(TimerCollection.toNanoSeconds(moveDelay));
     }
     
     @Override
@@ -33,30 +72,53 @@ public final class Agent extends Player implements IPlayer
         {
             if (getPill() != null)
             {
-                calculateGoal(engine.getManager().getBoard());
+                locateGoal(engine.getManager().getBoard());
+
+                if (getGoal() != null)
+                    System.out.println(getGoal().getCol() + ", " + getGoal().getRow() + " " + this.getRotation().toString());
             }
         }
         else
         {
             //the goal is set, now we need to move the Pill to the correct Location
-            
-            //if we aren't at the final rotation yet
-            if (getPill().getRotation() != getRotation())
+            if (timer.hasTimePassed())
             {
-                //rotate Pill
-                getPill().rotate();
+                //restart the timer
+                timer.reset();
+                
+                //if we aren't at the final rotation yet
+                if (getPill().getRotation() != getRotation())
+                {
+                    //rotate Pill
+                    getPill().rotate();
+                }
+                else
+                {
+                    //we are at the correct location so now we need to drop
+                    if (getPill().getCol() == getGoal().getCol())
+                    {
+                        //drop to next row
+                        super.applyGravity(engine.getManager().getBoard());
+                        
+                        //reset timer that determines the drop because we are doing that now
+                        super.getTimer().reset();
+                    }
+                    else
+                    {
+                        //we are west of our goal so move east
+                        if (getPill().getCol() < getGoal().getCol())
+                            getPill().increaseCol();
+
+                        //we are east of our goal so move west
+                        if (getPill().getCol() > getGoal().getCol())
+                            getPill().decreaseCol();
+                    }
+                }
             }
             else
             {
-                //we are at the correct rotation so now we need to be in the correct location
-                
-                //we are west of our goal so move east
-                if (getPill().getCol() < getGoal().getCol())
-                    getPill().increaseCol();
-                
-                //we are east of our goal so move west
-                if (getPill().getCol() > getGoal().getCol())
-                    getPill().decreaseCol();
+                //update our timer
+                timer.update(engine.getMain().getTime());
             }
         }
         
@@ -67,7 +129,7 @@ public final class Agent extends Player implements IPlayer
         }
     }
     
-    private void calculateGoal(final Board board)
+    private void locateGoal(final Board board)
     {
         /*
          * High level view how we determine the best position for the Pill
@@ -82,7 +144,7 @@ public final class Agent extends Player implements IPlayer
          * Scoring algorithm (alpha)
          * 1. For each virus eliminated add 200 points
          * 2. Match the Pill color and for each Pill color that can be matched add 25 points 
-         * 3. -----------If eliminating a virus leaves a Pill behind subtract 25 points
+         * 3. -----------NO => If eliminating a virus leaves a Pill behind subtract 25 points
          * 4. If a Pill color will be placed on a non-matching color subtract 25 points for each one
          * 5. 
          * 6. 
@@ -99,99 +161,221 @@ public final class Agent extends Player implements IPlayer
             //get the first block found in the current column
             final Block block = getBlockBelow(col, 0, board);
             
-            //there was no block found below skip to the next column
-            if (block == null)
-                continue;
-            
             //check every rotation at the current position
             for (Rotation rotation : Rotation.values())
             {
-                //set the Pill at the current location
-                getPill().setCol(block.getCol());
-                getPill().setRow(block.getRow());
-                
-                //move up 1 row from Block
-                getPill().decreaseRow();
-                
                 //set the current rotation
                 getPill().setRotation(rotation);
-
-                //if we have a collision this is not a valid location so move to the next rotation
-                if (board.hasCollision(getPill()))
-                    continue;
                 
-                //current score we are calculating
-                int tmpScore = 0;
-
-                //1. place the Pill on the board so we can check for matches and calculate score
-                placePill(board);
-                
-                //get the list of blocks that matched so we can count the number of viruses destoryed
-                List<Block> deadBlocks = board.checkMatch();
-                
-                //number of viruses destroyed
-                int count = 0;
-                
-                //if there are dead Block(s) count how many to determine the score added
-                if (deadBlocks.size() > 0)
+                //there was no block found below the pill will be placed at the bottom
+                if (block == null)
                 {
-                    for (Block tmp : deadBlocks)
-                    {
-                        //if the Block is a Virus add to the count
-                        if (Virus.isVirus(tmp.getType()))
-                            count++;
-                    }
-                }
-                
-                //remove the pill we placed
-                board.removeBlock(getPill());
-                
-                //add virus kill score
-                tmpScore += (count * 100);
-                
-                //2. check if the Block(s) below the Pill match and if so add 25 points for each
-                if (block.hasMatch(getPill().getType()))
-                {
-                    tmpScore += 25;
+                    //set the Pill at the bottom for the current column
+                    getPill().setCol(col);
+                    getPill().setRow(board.getRows() - 1);
                 }
                 else
                 {
-                    //no match so reduce score
-                    tmpScore -= 25;
-                }
-                
-                final Block tmpBlock = getBlockBelow(getPill().getExtra().getCol(), 0, board);
-                
-                //make sure Block exists and it isn't above the extra Block
-                if (tmpBlock != null && tmpBlock.getRow() > getPill().getExtra().getRow())
-                {
-                    if (getPill().getExtra().hasMatch(tmpBlock.getType()))
-                    {
-                        tmpScore += 25;
-                    }
-                    else
-                    {
-                        tmpScore -= 25;
-                    }
-                }
-                
-                
+                    //set the Pill at the current location
+                    getPill().setCol(block.getCol());
+                    getPill().setRow(block.getRow());
 
-                //if the current score beats the saved score set the new goal
-                if (tmpScore > score)
+                    //move up 1 row from Block to see if this position is available
+                    getPill().decreaseRow();
+                }
+                
+                //move up 1 more row if facing south
+                if (rotation == Rotation.South)
+                    getPill().decreaseRow();
+                
+                //if we have a collision this is not a valid location
+                if (board.hasCollision(getPill()))
+                    continue;
+                
+                //calculate the score for this position
+                final int tmpScore = calculateScore(block, board);
+                
+                //if the current score matches or beats the saved score set the new goal
+                if (tmpScore >= score)
                 {
-                    //set the location goal and rotation
-                    super.setGoals(getPill().getCell(), rotation);
+                    //make sure the goal is never the start location
+                    if (!getPill().getCell().equals(START))
+                    {
+                        //set the location goal and rotation
+                        super.setGoals(getPill().getCell(), rotation);
+
+                        //set this score as the one to beat
+                        score = tmpScore;
+                    }
                 }
             }
         }
         
+        //reset the rotation
+        getPill().reset();
+        
         //set the pill back to the original location
         getPill().setCol(pillCol);
         getPill().setRow(pillRow);
+    }
+    
+    private int calculateScore(final Block block, final Board board)
+    {
+        //current score we are calculating
+        int tmpScore = 0;
+
+        //place the Pill on the board so we can check for matches etc...
+        board.addPill(getPill());
+
+        //get the list of blocks that matched so we can count the number of viruses destroyed
+        List<Block> deadBlocks = board.checkMatch();
+
+        //if there are dead Block(s) count how many to determine the score added
+        if (deadBlocks.size() > 0)
+        {
+            //number of viruses destroyed
+            int countVirus = 0;
+            int countPill = 0;
+
+            for (Block tmp : deadBlocks)
+            {
+                //increase the count(s) accordingly
+                if (Virus.isVirus(tmp.getType()))
+                {
+                    countVirus++;
+                }
+                else
+                {
+                    countPill++;
+                }
+            }
+
+            //add up our score
+            tmpScore += (countVirus * SCORE_VIRUS_KILL);
+            tmpScore += (countPill  * SCORE_PILL_KILL);
+        }
+
+        //remove the pill we placed on the board
+        board.removeBlock(getPill());
+
+        //check if the block matches our Pill but only if the block exists
+        if (block != null)
+        {
+            //check if the Block(s) below the Pill match
+            if (block.hasMatch(getPill().getType()))
+            {
+                //more points if Block is a virus because we want to destroy the virus
+                if (Virus.isVirus(block))
+                {
+                    tmpScore += SCORE_VIRUS_MATCH;
+                }
+                else
+                {
+                    //but still some points if the Block matches
+                    tmpScore += SCORE_BLOCK_MATCH;
+                }
+            }
+            else
+            {
+                if (Virus.isVirus(block))
+                {
+                    //no match so add penalty
+                    tmpScore += SCORE_VIRUS_NO_MATCH;
+                }
+                else
+                {
+                    //no match so add penalty
+                    tmpScore += SCORE_BLOCK_NO_MATCH;
+                }
+            }
+        }
+        else
+        {
+            //if Block does not exist it is still ok to place
+            tmpScore += SCORE_NO_MATCH_EMPTY;
+        }
         
-        //also reset the rotation
-        getPill().reset();
+        final Block tmpBlock = getBlockBelow(getPill().getExtra().getCol(), 0, board);
+
+        //make sure Block exists
+        if (tmpBlock != null)
+        {
+            if (getPill().getCol() != getPill().getExtra().getCol())
+            {
+                //make sure the block below actually is below
+                if (tmpBlock.getRow() > getPill().getExtra().getRow())
+                {
+                    //does the extra Block match the block below
+                    if (getPill().getExtra().hasMatch(tmpBlock.getType()))
+                    {
+                        //more points if Block is a virus because we want to destroy the virus
+                        if (Virus.isVirus(tmpBlock))
+                        {
+                            tmpScore += SCORE_VIRUS_MATCH;
+                        }
+                        else
+                        {
+                            //but still some points if the Block matches
+                            tmpScore += SCORE_BLOCK_MATCH;
+                        }
+                    }
+                    else
+                    {
+                        if (Virus.isVirus(tmpBlock))
+                        {
+                            //no match so add penalty
+                            tmpScore += SCORE_VIRUS_NO_MATCH;
+                        }
+                        else
+                        {
+                            //no match so add penalty
+                            tmpScore += SCORE_BLOCK_NO_MATCH;
+                        }
+                    }
+                }
+                else
+                {
+                    //there is a Block, but it is above the extra Block which is very bad because we won't even be able to place in this position
+                    tmpScore += SCORE_NO_POSITION;
+                }
+            }
+            else
+            {
+                //if both pills are in the same column add a bonus if they match
+                if (getPill().hasMatch(getPill().getExtra().getType()))
+                {
+                    tmpScore += SCORE_SAME_COLUMN_MATCH;
+                }
+                else
+                {
+                    //penalize otherwise
+                    tmpScore += SCORE_SAME_COLUMN_NO_MATCH;
+                }
+            }
+        }
+        else
+        {
+            //if Block does not exist it is still ok to place
+            tmpScore += SCORE_NO_MATCH_EMPTY;
+        }
+        
+        //if the columns are the same score accordingly
+        if (getPill().getCol() == getPill().getExtra().getCol())
+        {
+            //if both pills are in the same column add a bonus if they match
+            if (getPill().hasMatch(getPill().getExtra().getType()))
+            {
+                tmpScore += SCORE_SAME_COLUMN_MATCH;
+            }
+            else
+            {
+                //penalize otherwise
+                tmpScore += SCORE_SAME_COLUMN_NO_MATCH;
+            }
+        }
+        
+        //return the score calculated
+        return tmpScore;
     }
     
     /**
