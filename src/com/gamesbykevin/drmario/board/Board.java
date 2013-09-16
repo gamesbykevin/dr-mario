@@ -24,14 +24,11 @@ public class Board extends Sprite
     //if any blocks need to be marked as dead they will be contained in here
     private List<Block> deadBlocks;
     
-    //our temporary List of dead Block(s)
-    private List<Block> deadBlocksTmp;
-    
     //the total number of columns and rows in our Board
     private final int cols, rows;
     
     //minimum amount of pieces needed for a match
-    private static final int MATCH_MINIMUM = 4;
+    public static final int MATCH_MINIMUM = 4;
     
     //the row to start the virus spawn to give the player some room
     private static final int SPAWN_START_ROW = 5;
@@ -55,9 +52,11 @@ public class Board extends Sprite
     private Timer timer;
     
     //the time to show the dead blocks animation
+    //private static final long DEATH_TIME = TimerCollection.toNanoSeconds(750L);
     private static final long DEATH_TIME = TimerCollection.toNanoSeconds(750L);
     
     //the time to wait between dropping the Block(s)
+    //private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
     private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
     
     /**
@@ -101,9 +100,6 @@ public class Board extends Sprite
         
         //create an empty List that will contain our dead Block(s)
         this.deadBlocks = new ArrayList<>();
-        
-        //create an empty List that will contain our temporary dead Block(s)
-        this.deadBlocksTmp = new ArrayList<>();
     }
     
     /**
@@ -204,32 +200,29 @@ public class Board extends Sprite
                     
                     checkDrop();
                 }
-                
-                //clear the List before we check again
-                deadBlocksTmp.clear();
-                
-                //create a List of Block(s) that match
-                checkMatch();
-                
-                //were any dead Block(s) found
-                if (deadBlocksTmp.size() > 0)
+                else
                 {
-                    //set the time limit to the death time and reset the timer
-                    this.timer.setReset(DEATH_TIME);
-                    this.timer.reset();
+                    //create a List of Block(s) that match
+                    List<Block> deadBlocksTmp = checkMatch();
 
-                    //mark all found as dead
-                    for (Block tmpBlock : deadBlocksTmp)
+                    //were any dead Block(s) found
+                    if (deadBlocksTmp.size() > 0)
                     {
-                        //mark the Block as dead
-                        getBlock(tmpBlock).setDead(true);
+                        //set the time limit to the death time and reset the timer
+                        this.timer.setReset(DEATH_TIME);
+                        this.timer.reset();
 
-                        //now add it to the official dead List
-                        deadBlocks.add(getBlock(tmpBlock));
+                        //mark all found as dead
+                        for (Block tmpBlock : deadBlocksTmp)
+                        {
+                            //mark the Block as dead
+                            getBlock(tmpBlock).setDead(true);
+
+                            //now add it to the official dead List
+                            deadBlocks.add(getBlock(tmpBlock));
+                        }
                     }
                 }
-                
-                
             }
         }
     }
@@ -419,6 +412,9 @@ public class Board extends Sprite
     
     public List<Block> checkMatch()
     {
+        //list of matching blocks
+        ArrayList<Block> deadBlocksTmp = new ArrayList<>();
+        
         for (int row=0; row < rows; row++)
         {
             for (int col=0; col < cols; col++)
@@ -436,14 +432,14 @@ public class Board extends Sprite
                 if (col <= cols - MATCH_MINIMUM)
                 {
                     //start at the current position and head east checking for all matching
-                    checkConsecutiveMatch(col, cols, row, tmpType, true);
+                    checkConsecutiveMatch(col, cols, row, tmpType, true, deadBlocksTmp);
                 }
                 
                 //make sure we aren't soo close that there is no way we will make a match
                 if (row <= rows - MATCH_MINIMUM)
                 {
                     //start at the current position and head south checking for all matching
-                    checkConsecutiveMatch(row, rows, col, tmpType, false);
+                    checkConsecutiveMatch(row, rows, col, tmpType, false, deadBlocksTmp);
                 }
             }
         }
@@ -461,108 +457,78 @@ public class Board extends Sprite
      * @param tmpType The type of Block we are looking for a match.
      * @param horizontal If true we will test going east. If false we will test going south.
      */
-    private void checkConsecutiveMatch(final int start, final int finish, final int staticDimension, final Type tmpType, final boolean horizontal)
+    private void checkConsecutiveMatch(final int start, final int finish, final int staticDimension, final Type tmpType, final boolean horizontal, final ArrayList<Block> deadBlocksTmp)
     {
-        //the number of matching blocks, start at 1 for the current location
-        int matchCount = 1;
+        //the number of matching blocks
+        int matchCount = 0;
         
         //temporary block object
         Block tmpBlock;
         
+        boolean hasPill = false;
+        
         //from the next position check the rest for match going south
-        for (int begin=start+1; begin < finish; begin++)
+        for (int current=start; current < finish; current++)
         {
             //if moving horizontal
             if (horizontal)
             {
-                tmpBlock = getBlock(begin, staticDimension);
+                tmpBlock = getBlock(current, staticDimension);
             }
             else
             {
-                tmpBlock = getBlock(staticDimension, begin);
+                tmpBlock = getBlock(staticDimension, current);
             }
 
             boolean match = (tmpBlock != null && tmpBlock.hasMatch(tmpType));
 
             //if there is a match increase the count
             if (match)
-                matchCount++;
-
-            //if the block does not exist or the type does not match or the last row
-            if (tmpBlock == null || !match || begin == finish - 1)
             {
-                //make sure we made the minimum requirements
-                if (matchCount >= MATCH_MINIMUM)
+                //see if at least one of the matching Block(s) is a Pill
+                if (Pill.isPill(tmpBlock))
+                    hasPill = true;
+                
+                matchCount++;
+            }
+
+            //if the block does not exist or the type does not match or the last dimension
+            if (tmpBlock == null || !match || current == finish - 1)
+            {
+                //make sure we made the minimum requirements and at least 1 of the matching Block(s) is a Pill
+                if (matchCount >= MATCH_MINIMUM && hasPill)
                 {
+                    //the last dimension that is part of the match
+                    final int matchFinish; 
+                    
                     //if we have a match or at the finish line
-                    if (begin == finish - 1 && match)
+                    if (current == finish - 1 && match)
                     {
-                        //locate all of the dead blocks from start to finish going in the specified direction
-                        verifyDead(start, begin, staticDimension, horizontal);
+                        matchFinish = current;
                     }
                     else
                     {
-                        //locate all of the dead blocks from start to finish going in the specified direction
-                        verifyDead(start, begin - 1, staticDimension, horizontal);
+                        matchFinish = current - 1;
                     }
+                    
+                    for (int matchCurrent = start; matchCurrent <= matchFinish; matchCurrent++)
+                    {
+                        //if we are heading east the column will be the variable
+                        if (horizontal)
+                        {
+                            deadBlocksTmp.add(getBlock(matchCurrent, staticDimension));
+                        }
+                        else
+                        {
+                            //we are heading south and the row will be the variable
+                            deadBlocksTmp.add(getBlock(staticDimension, matchCurrent));
+                        }
+                    }
+                    
                 }
 
                 //exit the loop and check next
                 break;
-            }
-        }
-    }
-    
-    /**
-     * Here we will make sure that the match has at least 1 Pill and the results will be returned in a List.
-     * 
-     * @param start The start of our check
-     * @param end The end of our check
-     * @param dimension The static column or row that will not change
-     * @param horizontal If true we will check going east. If false we will check going south
-     * @return List of Blocks that are dead
-     */
-    private void verifyDead(final int start, final int end, final int staticDimension, final boolean horizontal)
-    {
-        //in order for the match to be confirmed at least one of the Block(s) in question have to be a Pill
-        boolean hasPill = false;
-        
-        //in order for the viruses to be removed at least one of the blocks has to be a pill
-        for (int current = start; current <= end; current++)
-        {
-            Block tmp;
-            
-            if (horizontal)
-            {
-                tmp = getBlock(current, staticDimension);
-            }
-            else
-            {
-                tmp = getBlock(staticDimension, current);
-            }
-            
-            hasPill = Pill.isPill(tmp.getType());
-            
-            //if there is at least 1 pill we can skip checking the rest
-            if (hasPill)
-                break;
-        }
-        
-        //of all the Block(s) that match at least 1 has to be a pill
-        if (hasPill)
-        {
-            for (int current = start; current <= end; current++)
-            {
-                //if we are heading east the column will be the variable
-                if (horizontal)
-                {
-                    deadBlocksTmp.add(getBlock(current, staticDimension));
-                }
-                else
-                {
-                    //we are heading south and the row will be the variable
-                    deadBlocksTmp.add(getBlock(staticDimension, current));
-                }
             }
         }
     }
