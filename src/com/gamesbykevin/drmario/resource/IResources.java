@@ -1,9 +1,10 @@
 package com.gamesbykevin.drmario.resource;
 
+import com.gamesbykevin.drmario.shared.IDisposable;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
-public interface IResources 
+public interface IResources extends IDisposable
 {
     /**
      * Here we will handle loading the resources
@@ -18,11 +19,6 @@ public interface IResources
      * @param enabled Is the audio enabled or not
      */
     public void setAudioEnabled(final boolean enabled);
-    
-    /**
-     * Proper house cleaning
-     */
-    public void dispose();
     
     /**
      * This method will determine if all resources have been loaded into memory

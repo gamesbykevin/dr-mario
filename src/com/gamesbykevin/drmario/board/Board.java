@@ -6,17 +6,21 @@ import com.gamesbykevin.framework.util.*;
 
 import com.gamesbykevin.drmario.block.*;
 import com.gamesbykevin.drmario.block.Block.*;
+import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.shared.IElement;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * The board where the viruses and pills will be contained
  * @author GOD
  */
-public class Board extends Sprite
+public class Board extends Sprite implements IElement
 {
     //this List will contain all of the blocks on the board
     private Block[][] blocks;
@@ -34,7 +38,7 @@ public class Board extends Sprite
     private static final int SPAWN_START_ROW = 5;
     
     //the virus count, and progress count
-    private final int count;
+    private final int virusCount;
     
     //where are we compared to the actual total
     private int countProgress = 0;
@@ -52,12 +56,19 @@ public class Board extends Sprite
     private Timer timer;
     
     //the time to show the dead blocks animation
-    //private static final long DEATH_TIME = TimerCollection.toNanoSeconds(750L);
-    private static final long DEATH_TIME = TimerCollection.toNanoSeconds(750L);
+    //private static final long DEATH_TIME = TimerCollection.toNanoSeconds(500L);
+    private static final long DEATH_TIME = TimerCollection.toNanoSeconds(1L);
     
     //the time to wait between dropping the Block(s)
     //private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
-    private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
+    private static final long DROP_TIME = TimerCollection.toNanoSeconds(1L);
+    
+    //the dimensions for the board
+    private static final int COLUMNS = 8;
+    private static final int ROWS = 16;
+    
+    //our random number generator object
+    private final Random random;
     
     /**
      * Create a new empty board of the specified columns and rows and to be rendered within the screen.
@@ -67,17 +78,20 @@ public class Board extends Sprite
      * @param rows The total number of rows
      * @param count The total number of viruses
      */
-    public Board(final Rectangle container, final int cols, final int rows, final int count)
+    public Board(final Rectangle container, final int virusCount, final long seed)
     {
         //set the limits of the board
-        this.cols = cols;
-        this.rows = rows;
+        this.cols = COLUMNS;
+        this.rows = ROWS;
+        
+        //create our random number generator object
+        this.random = new Random(seed);
         
         //create new timer with death time set
         this.timer = new Timer(DEATH_TIME);
         
         //set the virus count
-        this.count = count;
+        this.virusCount = virusCount;
         
         //set the location and dimensions of the entire board
         super.setLocation(container.x, container.y);
@@ -100,6 +114,37 @@ public class Board extends Sprite
         
         //create an empty List that will contain our dead Block(s)
         this.deadBlocks = new ArrayList<>();
+    }
+    
+    /**
+     * Free up resources
+     */
+    @Override
+    public void dispose()
+    {
+        super.dispose();
+        
+        for (int col=0; col < blocks[0].length; col++)
+        {
+            for (int row=0; row < blocks.length; row++)
+            {
+                if (blocks[row][col] != null)
+                {
+                    blocks[row][col].dispose();
+                    blocks[row][col] = null;
+                }
+            }
+        }
+        
+        blocks = null;
+        
+        deadBlocks.clear();
+        deadBlocks = null;
+    
+        locations.clear();
+        locations = null;
+    
+        timer = null;
     }
     
     /**
@@ -135,7 +180,7 @@ public class Board extends Sprite
      */
     private boolean hasSpawnGoal()
     {
-        return countProgress >= count;
+        return countProgress >= virusCount;
     }
     
     /**
@@ -152,9 +197,12 @@ public class Board extends Sprite
     }
     
     /**
-     * Here we will check for a match and drop the pieces if necessary
+     * Here we will check for match and drop the Block(s) if necessary
+     * @param engine
+     * @throws Exception 
      */
-    public void update(final long time)
+    @Override
+    public void update(final Engine engine) throws Exception
     {
         //if we haven't reached our goal and there are still spawn locations
         if (!isSpawnComplete())
@@ -171,7 +219,7 @@ public class Board extends Sprite
             if (hasDead())
             {
                 //update timer
-                timer.update(time);
+                timer.update(engine.getMain().getTime());
                 
                 //if the time has passed
                 if (timer.hasTimePassed())
@@ -196,14 +244,14 @@ public class Board extends Sprite
                 if (hasDrop())
                 {
                     //update timer
-                    timer.update(time);
+                    timer.update(engine.getMain().getTime());
                     
                     checkDrop();
                 }
                 else
                 {
                     //create a List of Block(s) that match
-                    List<Block> deadBlocksTmp = checkMatch();
+                    List<Block> deadBlocksTmp = getMatches();
 
                     //were any dead Block(s) found
                     if (deadBlocksTmp.size() > 0)
@@ -382,16 +430,19 @@ public class Board extends Sprite
         deadBlocks.clear();
     }
     
-    private void spawnVirus()
+    private void spawnVirus() throws Exception
     {
         //pick a random index
-        final int index = (int)(Math.random() * locations.size());
-
+        int index = 0;
+        
+        if (locations.size() > 1)
+            index = random.nextInt(locations.size() - 1);
+        
         //get the location using the index
         Cell tmp = locations.get(index);
 
         //create new virus
-        Virus virus = new Virus();
+        Virus virus = new Virus(random);
 
         //set the correct Column, Row
         virus.setCol(tmp);
@@ -410,7 +461,7 @@ public class Board extends Sprite
         countProgress++;
     }
     
-    public List<Block> checkMatch()
+    public List<Block> getMatches()
     {
         //list of matching blocks
         ArrayList<Block> deadBlocksTmp = new ArrayList<>();
@@ -560,6 +611,47 @@ public class Board extends Sprite
         return getBlock(cell.getCol(), cell.getRow());
     }
     
+    /**
+     * Count the total number of viruses on the board.
+     * @return int The total number of red, blue, and yellow viruses
+     */
+    public int getVirusCount()
+    {
+        int count = 0;
+        
+        for (Type type : Type.values())
+        {
+            if (Virus.isVirus(type))
+            {
+                count += getCount(type);
+            }
+        }
+        
+        return count;
+    }
+    
+    /**
+     * Get the count for a specific Type of Block
+     * @param type The type of Block we want a count for
+     * @return int The total number of Block type found in the board
+     */
+    public int getCount(final Type type)
+    {
+        //count of Block(s) of a specific Type
+        int typeCount = 0;
+        
+        for (int col=0; col < getCols(); col++)
+        {
+            for (int row=0; row < getRows(); row++)
+            {
+                if (getBlock(col, row) != null && getBlock(col, row).getType() == type)
+                    typeCount++;
+            }
+        }
+        
+        return typeCount;
+    }
+    
     public void removeBlock(final Pill pill)
     {
         removeBlock(pill.getCol(), pill.getRow());
@@ -631,7 +723,7 @@ public class Board extends Sprite
      * Add the Pill to the board
      * @param pill The pill we want to add
      */
-    public void addPill(final Pill pill)
+    public void addPill(final Pill pill) throws Exception
     {
         //correct the x,y coordinates
         pill.setPosition(getX(), getY());
@@ -641,10 +733,11 @@ public class Board extends Sprite
         setBlock(pill.getExtra().getCol(), pill.getExtra().getRow(), new Block(pill.getExtra()));
     }
     
+    @Override
     public void render(Graphics graphics)
     {
         //draw outline of board for now
-        graphics.setColor(java.awt.Color.WHITE);
+        graphics.setColor(Color.WHITE);
         graphics.drawRect((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
         
         for (int row=0; row < rows; row++)
@@ -656,5 +749,20 @@ public class Board extends Sprite
                     getBlock(col, row).render(graphics);
             }
         }
+        
+        //draw virus counts
+        graphics.setFont(graphics.getFont().deriveFont(12f));
+        graphics.setColor(Color.WHITE);
+        
+        int r = getCount(Type.RedVirus);
+        int b = getCount(Type.BlueVirus);
+        int y = getCount(Type.YellowVirus);
+        
+        
+        graphics.drawString("R = " + r, (int)getX() - 45, (int)getY());
+        graphics.drawString("B = " + b, (int)getX() - 45, (int)getY() + 15);
+        graphics.drawString("Y = " + y, (int)getX() - 45, (int)getY() + 30);
+        
+        graphics.drawString("All = " + (r+b+y), (int)getX() - 45, (int)getY() + 60);
     }
 }

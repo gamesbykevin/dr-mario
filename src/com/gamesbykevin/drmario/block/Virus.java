@@ -1,22 +1,36 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.drmario.block.Block.Type;
+import com.gamesbykevin.drmario.board.Board;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * These are the enemies that need to be destroyed
  * @author GOD
  */
-public class Virus extends Block 
+public class Virus extends Block implements IBlock
 {
-    public Virus()
+    public Virus(final Random random) throws Exception
     {
-        super(getRandom());
+        super();
+        
+        //assign random Type
+        super.setType(getRandom(random));
     }
     
-    public static Type getRandom()
+    /**
+     * Get a random Type of Virus.
+     * Blue Virus, Yellow Virus, Red Virus
+     * 
+     * @param rand The random object used to generate a random index
+     * 
+     * @return Type
+     */
+    @Override
+    public Type getRandom(final Random rand)
     {
         List<Type> types = new ArrayList<>();
         
@@ -26,7 +40,7 @@ public class Virus extends Block
                 types.add(tmp);
         }
         
-        return types.get((int)(Math.random() * types.size()));
+        return types.get(rand.nextInt(types.size()));
     }
     
     public static boolean isVirus(final Block block)

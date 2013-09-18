@@ -1,28 +1,38 @@
 package com.gamesbykevin.drmario.player;
 
+import com.gamesbykevin.drmario.shared.IElement;
+
 import com.gamesbykevin.drmario.engine.Engine;
+
 import java.awt.event.KeyEvent;
 
 /**
  * The player will contain the pill piece and the input 
  * @author GOD
  */
-public final class Human extends Player implements IPlayer
+public final class Human extends Player implements IElement
 {
-    public Human(final long delay)
+    public Human(final long delay) throws Exception
     {
         super(delay);
     }
     
     /**
-     * Update the Human Player with the given input
+     * Update the Human Player with the given keyboard input
      * @param engine 
      */
     @Override
-    public void update(final Engine engine)
+    public void update(final Engine engine) throws Exception
     {
         //if the player has lost no more updates required
-        if (hasLose())
+        if (hasLose() || hasWin())
+            return;
+        
+        //check for matches on board etc...
+        getBoard().update(engine);
+        
+        //if we can't interact with the board due to a virus/pill match or pill drop etc..
+        if (!getBoard().canInteract())
             return;
         
         super.update(engine);
@@ -32,16 +42,13 @@ public final class Human extends Player implements IPlayer
             return;
         
         //if time has passed the blocks need to drop or if the user is forcing the piece to drop
-        if (getTimer().hasTimePassed() || engine.getKeyboard().hasKeyPressed(KeyEvent.VK_DOWN))
+        if (engine.getKeyboard().hasKeyPressed(KeyEvent.VK_DOWN))
         {
             //remove key released from List
             engine.getKeyboard().removeKeyPressed(KeyEvent.VK_DOWN);
 
-            //reset the time
-            getTimer().reset();
-            
             //apply gravity to pill
-            applyGravity(engine.getManager().getBoard());
+            applyGravity();
         }
         
         //the user wants to rotate the pieces
@@ -53,7 +60,7 @@ public final class Human extends Player implements IPlayer
             getPill().rotate();
             
             //check for collision
-            if (engine.getManager().getBoard().hasCollision(getPill()))
+            if (getBoard().hasCollision(getPill()))
             {
                 //reset the location because of collision
                 getPill().rewind();
@@ -67,7 +74,7 @@ public final class Human extends Player implements IPlayer
             getPill().decreaseCol();
 
             //now that the blocked moved check for collision
-            if (engine.getManager().getBoard().hasCollision(getPill()))
+            if (getBoard().hasCollision(getPill()))
             {
                 //move the pill back
                 getPill().increaseCol();
@@ -83,7 +90,7 @@ public final class Human extends Player implements IPlayer
             getPill().increaseCol();
 
             //now that the blocked moved check for collision
-            if (engine.getManager().getBoard().hasCollision(getPill()))
+            if (getBoard().hasCollision(getPill()))
             {
                 //move the blocks back
                 getPill().decreaseCol();
@@ -92,10 +99,7 @@ public final class Human extends Player implements IPlayer
             engine.getKeyboard().removeKeyPressed(KeyEvent.VK_RIGHT);
         }
         
-        //set the correct x,y coordinates for the pill
-        if (getPill() != null)
-        {
-            getPill().setPosition(engine.getManager().getBoard().getX(), engine.getManager().getBoard().getY());
-        }
+        //set the correct x,y Location for the current Pill
+        updateLocation();
     }
 }

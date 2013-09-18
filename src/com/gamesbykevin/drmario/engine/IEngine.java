@@ -1,15 +1,13 @@
 package com.gamesbykevin.drmario.engine;
 
 import com.gamesbykevin.drmario.main.Main;
+
+import com.gamesbykevin.drmario.shared.IDisposable;
+
 import java.awt.Graphics;
 
-public interface IEngine 
+public interface IEngine extends IDisposable
 {
-    /**
-     * Recycles the appropriate variables for garbage collection
-     */
-    public void dispose();
-    
     /**
      * This method needs to reset the appropriate game elements so the game can restart
      * 
@@ -18,7 +16,7 @@ public interface IEngine
     public void reset() throws Exception;
     
     /**
-     * 
+     * Draw the engine which contains all of the game elements
      * @param graphics Graphics object that game will be written to
      * @return Graphics object containing game/menu elements
      * @throws Exception 

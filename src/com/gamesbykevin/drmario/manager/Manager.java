@@ -1,45 +1,72 @@
 package com.gamesbykevin.drmario.manager;
 
-import com.gamesbykevin.drmario.player.Agent;
-import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.player.Agent;
 import com.gamesbykevin.drmario.player.Human;
+import com.gamesbykevin.drmario.shared.IElement;
 
 import java.awt.Graphics;
 import java.awt.Rectangle;
-
+import java.util.ArrayList;
+import java.util.List;
 /**
  * The parent class that contains all of the game elements
  * @author GOD
  */
-public final class Manager implements IManager
+public final class Manager implements IElement
 {
-    //the board the game play will occur
-    private Board board;
-    
-    //the player and the Pill the Player will control
+    //our human object
     private Human player;
     
-    //our AI competitor
-    private Agent agent;
+    //our cpu opponent
+    private List<Agent> agents;
     
-    //the dimensions for the board
-    private static final int COLUMNS = 8;
-    private static final int ROWS = 16;
-    
-    private int virusCount = 30;
+    private int virusCount = 100;
     
     public Manager(final Engine engine) throws Exception
     {
-        board = new Board(new Rectangle(50,25, 160, 320), COLUMNS, ROWS, virusCount);
+        //1500 milliseconds per each Pill drop
+        final long gravityDelay = 1500L;
         
-        //player = new Human(1500);
-        agent = new Agent(1500, 150);
+        //the delay per each movement for the Artifical Intelligence
+        final long movementDelay = 250L;//250L;
+        
+        //player = new Human(gravityDelay);
+        
+        //our List of AI opponents
+        agents = new ArrayList<>();
+        
+        final int opponentCount = 7;
+        
+        for (int i=0; i < opponentCount; i++)
+        {
+            agents.add(new Agent(gravityDelay, movementDelay));
+        }
+        
+        createBoards();
     }
     
-    public Board getBoard()
+    /**
+     * Create all of the boards
+     */
+    private void createBoards()
     {
-        return this.board;
+        Rectangle container = new Rectangle(50, 25, 160, 320);
+        
+        if (player != null)
+        {
+            player.createBoard(container, virusCount);
+            container.x += container.width;
+        }
+        
+        if (agents != null && agents.size() > 0)
+        {
+            for (Agent agent : agents)
+            {
+                agent.createBoard(container, virusCount);
+                container.x += container.width;
+            }
+        }
     }
     
     /**
@@ -48,7 +75,25 @@ public final class Manager implements IManager
     @Override
     public void dispose()
     {
+        if (player != null)
+        {
+            player.dispose();
+            player = null;
+        }
         
+        if (agents != null)
+        {
+            for (Agent agent : agents)
+            {
+                if (agent != null)
+                    agent.dispose();
+                
+                agent = null;
+            }
+            
+            agents.clear();
+            agents = null;
+        }
     }
     
     /**
@@ -60,19 +105,15 @@ public final class Manager implements IManager
     @Override
     public void update(final Engine engine) throws Exception
     {
-        //check for matches on board etc...
-        board.update(engine.getMain().getTime());
-        
-        //if we have the opportunity to interact with the board check Player input
-        if (board.canInteract())
+        if (player != null)
         {
-            if (player != null)
-            {
-                //check for keyboard input etc..
-                player.update(engine);
-            }
-            
-            if (agent != null)
+            //check for keyboard input etc..
+            player.update(engine);
+        }
+
+        if (agents != null)
+        {
+            for (Agent agent : agents)
             {
                 //execute ai logic
                 agent.update(engine);
@@ -87,21 +128,17 @@ public final class Manager implements IManager
     @Override
     public void render(final Graphics graphics)
     {
-        //draw the board and all of the pieces
-        board.render(graphics);
-        
-        //if we have the opportunity to interact with the board draw the Player Pill
-        if (board.canInteract())
+        if (player != null)
         {
-            if (player != null)
-            {
-                //draw the player's current Pill
-                player.render(graphics);
-            }
+            //draw the player's current Pill and Board
+            player.render(graphics);
+        }
             
-            if (agent != null)
+        if (agents != null)
+        {
+            for (Agent agent : agents)
             {
-                //draw the AI's current Pill
+                //draw the AI's current Pill and Board
                 agent.render(graphics);
             }
         }

@@ -5,7 +5,7 @@ import com.gamesbykevin.drmario.engine.Engine;
 public interface LayerRules 
 {
     /**
-     * Setup Layer including options if they exist
+     * Setup Layer options (if they exist)
      * 
      * @param engine 
      */

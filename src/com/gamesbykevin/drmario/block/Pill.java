@@ -3,16 +3,18 @@ package com.gamesbykevin.drmario.block;
 import com.gamesbykevin.framework.base.Cell;
 
 import com.gamesbykevin.drmario.block.Block.Type;
+import com.gamesbykevin.drmario.board.Board;
 
 import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * The pills used in the game to cure the virus
  * @author GOD
  */
-public class Pill extends Block 
+public class Pill extends Block implements IBlock
 {
     //a Pill consists of 2 Blocks
     private Block extra;
@@ -31,12 +33,18 @@ public class Pill extends Block
     //which rotation are we currently at
     private int rotationIndex;
     
-    public Pill()
+    public Pill(final Random random) throws Exception
     {
-        super(getRandom());
+        super();
+        
+        //assign random Type
+        super.setType(getRandom(random));
         
         //create new Block since a Pill constists of 2 Block(s)
-        extra = new Block(getRandom());
+        extra = new Block();
+        
+        //assign random Type
+        extra.setType(getRandom(random));
         
         //make extra Block part of the same group so we know they are one
         extra.setGroup(super.getGroup());
@@ -48,11 +56,6 @@ public class Pill extends Block
     public Rotation getRotation()
     {
         return Rotation.values()[rotationIndex];
-    }
-    
-    public static boolean isPill(final Block block)
-    {
-        return (isPill(block.getType()));
     }
     
     public Block getExtra()
@@ -154,7 +157,16 @@ public class Pill extends Block
         return (getRow() == row || extra.getRow() == row);
     }
     
-    public static Type getRandom()
+    /**
+     * Get a random Type of Pill.
+     * Blue Pill, Yellow Pill, Red Pill
+     * 
+     * @param rand The random object used to generate a random index
+     * 
+     * @return Type
+     */
+    @Override
+    public Type getRandom(final Random rand)
     {
         List<Type> types = new ArrayList<>();
         
@@ -164,7 +176,7 @@ public class Pill extends Block
                 types.add(tmp);
         }
         
-        return types.get((int)(Math.random() * types.size()));
+        return types.get(rand.nextInt(types.size()));
     }
     
     /**
@@ -250,6 +262,11 @@ public class Pill extends Block
             default:
                 return false;
         }
+    }
+    
+    public static boolean isPill(final Block block)
+    {
+        return (isPill(block.getType()));
     }
     
     @Override

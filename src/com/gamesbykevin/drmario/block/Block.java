@@ -1,6 +1,7 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Sprite;
+import com.gamesbykevin.drmario.shared.IDisposable;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -9,7 +10,7 @@ import java.awt.Graphics;
  * The block will represent one part of the pill used in the original game
  * @author GOD
  */
-public class Block extends Sprite
+public class Block extends Sprite implements IDisposable
 {
     /**
      * What type of Block is this
@@ -25,7 +26,7 @@ public class Block extends Sprite
     }
     
     //the type of block
-    private final Type type;
+    private Type type;
     
     //is this block dead
     private boolean dead = false;
@@ -37,18 +38,24 @@ public class Block extends Sprite
     protected static final int WIDTH = 20;
     protected static final int HEIGHT = 20;
     
-    public Block(final Block block)
+    public Block(final Block block) throws Exception
     {
+        //call parent constructor so all properties are copied from object
         super(block);
         
         //the Type of Block. Pill, Virus, etc..
-        this.type = block.getType();
+        setType(block.getType());
         
         //remember the group as well so we know which Block(s) are connected
         setGroup(block.getGroup());
         
         //set the dimensions of the Block
         super.setDimensions(WIDTH, HEIGHT);
+    }
+    
+    public Block()
+    {
+        
     }
     
     /**
@@ -64,8 +71,11 @@ public class Block extends Sprite
         setDimensions(WIDTH, HEIGHT);
     }
     
-    public Block(final Type type)
+    public void setType(final Type type) throws Exception
     {
+        if (getType() != null)
+            throw new Exception("The Block Type can only be set once");
+        
         this.type = type;
     }
     
