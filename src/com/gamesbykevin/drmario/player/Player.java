@@ -46,9 +46,9 @@ public class Player implements IElement
     private Rotation rotation;
     
     //the seed used to generate random numbers
-    private final long SEED = 104773781486347L;//System.nanoTime();
+    private final long SEED = 21949303610819L;//System.nanoTime();//11407889599305L;
     
-    private Random random;
+    private final Random random;
     
     /**
      * Create a new timer with the specified delay that will determine the duration
@@ -60,18 +60,17 @@ public class Player implements IElement
         //new timer with the specified milisecond delay
         this.gravityTimer = new Timer(TimerCollection.toNanoSeconds(delay));
         
-        //create new random number generator
         this.random = new Random(SEED);
+        
+        System.out.println(SEED);
         
         //create a Next Pill that will be the next Pill used
         createNextPill();
     }
     
-    public void createBoard(final Rectangle container, final int virusCount)
+    public void createBoard(final Rectangle container, final int virusCount) throws Exception
     {
         board = new Board(container, virusCount, SEED);
-        
-        System.out.println(SEED + "");
     }
     
     protected Board getBoard()
@@ -158,11 +157,19 @@ public class Player implements IElement
         this.rotation = rotation;
     }
     
+    /**
+     * Get the Goal destination set by the AI 
+     * @return Cell containing the col/row of our destination
+     */
     protected Cell getGoal()
     {
         return this.goal;
     }
     
+    /**
+     * Get the goal Rotation set by the AI
+     * @return Rotation (North, South, East, or West)
+     */
     protected Rotation getRotation()
     {
         return this.rotation;
@@ -187,14 +194,22 @@ public class Player implements IElement
             //move the pill back
             getPill().decreaseRow();
 
-            //place Pill on board
-            getBoard().addPill(getPill());
+            if (getPill().getRow() < 0 || getPill().getExtra().getRow() < 0)
+            {
+                this.lose = true;
+                return;
+            }
+            else
+            {
+                //place Pill on board
+                getBoard().addPill(getPill());
 
-            //now that Pill has been placed remove it
-            removePill();
+                //now that Pill has been placed remove it
+                removePill();
 
-            //reset the goal
-            resetGoal();
+                //reset the goal
+                resetGoal();
+            }
         }
         
         //reset the time until gravity has to be applied again

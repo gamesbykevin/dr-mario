@@ -29,7 +29,7 @@ public class Board extends Sprite implements IElement
     private List<Block> deadBlocks;
     
     //the total number of columns and rows in our Board
-    private final int cols, rows;
+    private int cols, rows;
     
     //minimum amount of pieces needed for a match
     public static final int MATCH_MINIMUM = 4;
@@ -38,7 +38,7 @@ public class Board extends Sprite implements IElement
     private static final int SPAWN_START_ROW = 5;
     
     //the virus count, and progress count
-    private final int virusCount;
+    private int virusCount;
     
     //where are we compared to the actual total
     private int countProgress = 0;
@@ -80,6 +80,10 @@ public class Board extends Sprite implements IElement
      */
     public Board(final Rectangle container, final int virusCount, final long seed)
     {
+        //set the location and dimensions of the entire board
+        super.setLocation(container.x, container.y);
+        super.setDimensions(container.width, container.height);
+        
         //set the limits of the board
         this.cols = COLUMNS;
         this.rows = ROWS;
@@ -92,10 +96,6 @@ public class Board extends Sprite implements IElement
         
         //set the virus count
         this.virusCount = virusCount;
-        
-        //set the location and dimensions of the entire board
-        super.setLocation(container.x, container.y);
-        super.setDimensions(container.width, container.height);
         
         //the blocks on the board
         blocks = new Block[rows][cols];
@@ -575,7 +575,6 @@ public class Board extends Sprite implements IElement
                             deadBlocksTmp.add(getBlock(staticDimension, matchCurrent));
                         }
                     }
-                    
                 }
 
                 //exit the loop and check next

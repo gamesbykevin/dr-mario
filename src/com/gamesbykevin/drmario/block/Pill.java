@@ -53,6 +53,10 @@ public class Pill extends Block implements IBlock
         this.rotationIndex = 0;
     }
     
+    /**
+     * Get the current direction the Pill is facing
+     * @return Rotation (North, South, East, or West)
+     */
     public Rotation getRotation()
     {
         return Rotation.values()[rotationIndex];

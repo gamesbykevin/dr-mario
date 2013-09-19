@@ -29,14 +29,14 @@ public final class Manager implements IElement
         final long gravityDelay = 1500L;
         
         //the delay per each movement for the Artifical Intelligence
-        final long movementDelay = 250L;//250L;
+        final long movementDelay = 310L;//250L;
         
         //player = new Human(gravityDelay);
         
         //our List of AI opponents
         agents = new ArrayList<>();
         
-        final int opponentCount = 7;
+        final int opponentCount = 1;
         
         for (int i=0; i < opponentCount; i++)
         {
@@ -49,7 +49,7 @@ public final class Manager implements IElement
     /**
      * Create all of the boards
      */
-    private void createBoards()
+    private void createBoards() throws Exception
     {
         Rectangle container = new Rectangle(50, 25, 160, 320);
         
