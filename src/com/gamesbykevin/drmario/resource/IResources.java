@@ -1,10 +1,11 @@
 package com.gamesbykevin.drmario.resource;
 
-import com.gamesbykevin.drmario.shared.IDisposable;
+import com.gamesbykevin.framework.resources.Disposable;
+
 import java.awt.Graphics;
 import java.awt.Rectangle;
 
-public interface IResources extends IDisposable
+public interface IResources extends Disposable
 {
     /**
      * Here we will handle loading the resources

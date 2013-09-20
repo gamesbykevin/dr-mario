@@ -2,11 +2,11 @@ package com.gamesbykevin.drmario.engine;
 
 import com.gamesbykevin.drmario.main.Main;
 
-import com.gamesbykevin.drmario.shared.IDisposable;
+import com.gamesbykevin.framework.resources.Disposable;
 
 import java.awt.Graphics;
 
-public interface IEngine extends IDisposable
+public interface IEngine extends Disposable
 {
     /**
      * This method needs to reset the appropriate game elements so the game can restart

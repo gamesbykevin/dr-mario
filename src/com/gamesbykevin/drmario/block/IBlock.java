@@ -1,12 +1,12 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.drmario.block.Block.Type;
-import com.gamesbykevin.drmario.shared.IDisposable;
+import com.gamesbykevin.framework.resources.Disposable;
 
 import java.awt.Graphics;
 import java.util.Random;
 
-public interface IBlock extends IDisposable
+public interface IBlock extends Disposable
 {
     /**
      * Get a random Block Type.

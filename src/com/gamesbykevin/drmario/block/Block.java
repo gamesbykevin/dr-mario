@@ -1,7 +1,7 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Sprite;
-import com.gamesbykevin.drmario.shared.IDisposable;
+import com.gamesbykevin.framework.resources.Disposable;
 
 import java.awt.Color;
 import java.awt.Graphics;
@@ -10,7 +10,7 @@ import java.awt.Graphics;
  * The block will represent one part of the pill used in the original game
  * @author GOD
  */
-public class Block extends Sprite implements IDisposable
+public class Block extends Sprite implements Disposable
 {
     /**
      * What type of Block is this

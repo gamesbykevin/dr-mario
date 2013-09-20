@@ -1,14 +1,16 @@
 package com.gamesbykevin.drmario.shared;
 
-import java.awt.Graphics;
+import com.gamesbykevin.framework.resources.Disposable;
 
 import com.gamesbykevin.drmario.engine.Engine;
+
+import java.awt.Graphics;
 
 /**
  * Basic methods required for game elementsMethods needed for game elements
  * @author GOD
  */
-public interface IElement extends IDisposable
+public interface IElement extends Disposable
 {
     /**
      * Update our game element accordingly
