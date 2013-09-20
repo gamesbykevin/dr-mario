@@ -46,7 +46,7 @@ public class Player implements IElement
     private Rotation rotation;
     
     //the seed used to generate random numbers
-    private final long SEED = 21949303610819L;//System.nanoTime();//11407889599305L;
+    private final long SEED = System.nanoTime();
     
     private final Random random;
     

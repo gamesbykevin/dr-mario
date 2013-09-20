@@ -29,14 +29,14 @@ public final class Manager implements IElement
         final long gravityDelay = 1500L;
         
         //the delay per each movement for the Artifical Intelligence
-        final long movementDelay = 310L;//250L;
+        final long movementDelay = 10L;//250L;
         
         //player = new Human(gravityDelay);
         
         //our List of AI opponents
         agents = new ArrayList<>();
         
-        final int opponentCount = 1;
+        final int opponentCount = 7;
         
         for (int i=0; i < opponentCount; i++)
         {

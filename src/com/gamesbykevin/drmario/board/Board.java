@@ -35,7 +35,7 @@ public class Board extends Sprite implements IElement
     public static final int MATCH_MINIMUM = 4;
     
     //the row to start the virus spawn to give the player some room
-    private static final int SPAWN_START_ROW = 5;
+    private static final int SPAWN_START_ROW = 6;
     
     //the virus count, and progress count
     private int virusCount;

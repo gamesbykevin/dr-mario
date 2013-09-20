@@ -38,7 +38,7 @@ public final class Agent extends Player implements IElement
     private static final int SCORE_BLOCK_NO_MATCH = -25;
     
     //when both Block(s) in the Pill are in the same column and match
-    private static final int SCORE_SAME_COLUMN_MATCH = 5;
+    private static final int SCORE_SAME_COLUMN_MATCH = 25;
     
     //when both Block(s) in the Pill are in the same column and they don't match
     private static final int SCORE_SAME_COLUMN_NO_MATCH = -85;
@@ -49,11 +49,11 @@ public final class Agent extends Player implements IElement
     //if the block does not match and same has a virus, we need this so the agent will avoid these locations
     private static final int SCORE_BLOCK_NO_MATCH_VIRUS_COLUMN = -25;
     
-    //
-    private static final int SCORE_DANGER_ZONE_MATCH = 25;
+    //we are very close to the top and the block(s) match
+    private static final int SCORE_DANGER_ZONE_MATCH = 125;
     
-    //
-    private static final int SCORE_DANGER_ZONE_NO_MATCH = -250;
+    //we are very close to the top and the block(s) don't match, this is bad because we won't be able to match the block(s)
+    private static final int SCORE_DANGER_ZONE_NO_MATCH = -500;
     
     //the Timer that determines when the Agent can move
     private Timer movementTimer;
@@ -298,12 +298,40 @@ public final class Agent extends Player implements IElement
             }
         }
         
+        //are we in the danger zone
+        if (getPill().getRow() < Board.MATCH_MINIMUM || getPill().getExtra().getRow() < Board.MATCH_MINIMUM)
+        {
+            if (block != null && extraBlock != null)
+            {
+                //are both Blocks directly below the pill, that means no gap is created
+                if (getPill().getRow() + 1 == block.getRow() && getPill().getExtra().getRow() + 1 == extraBlock.getRow())
+                {
+                    //do both Block(s) below match as well
+                    if (getPill().hasMatch(block.getType()) && getPill().getExtra().hasMatch(extraBlock.getType()))
+                    {
+                        //add reward
+                        tmpScore += SCORE_DANGER_ZONE_MATCH;
+                    }
+                    else
+                    {
+                        //add penalty
+                        tmpScore += SCORE_DANGER_ZONE_NO_MATCH;
+                    }
+                }
+                else
+                {
+                    //a gap is being created
+                    tmpScore += -100;
+                }
+            }
+        }
+        
         //calculate the score for the Pill Block
         tmpScore += scoreBlock(getPill(), block, blockKill);
-
+        
         //calculate the score for the Pill extra Block
         tmpScore += scoreBlock(getPill().getExtra(), extraBlock, blockKill);
-            
+        
         //remove the pill we placed on the getBoard()
         getBoard().removeBlock(getPill());
         
@@ -319,111 +347,52 @@ public final class Agent extends Player implements IElement
      */
     private int scoreBlock(final Block blockPill, final Block blockBelow, final boolean blockKill)
     {
-        //does the same column as the Pill contain a virus
-        final boolean hasVirus = hasVirus(blockPill.getCol());
-        
         int tmpScore = 0;
         
-        if (blockBelow != null)
+        if (blockBelow == null)
+            return tmpScore;
+        
+        //does the same column as the Pill contain a virus
+        final boolean hasVirus = hasVirus(blockPill.getCol());
+
+        //does the extra Block match the block below
+        if (blockPill.hasMatch(blockBelow.getType()))
         {
-            //does the extra Block match the block below
-            if (blockPill.hasMatch(blockBelow.getType()))
+            //more points if Block is a virus because we want to destroy the virus
+            if (Virus.isVirus(blockBelow))
             {
-                //more points if Block is a virus because we want to destroy the virus
-                if (Virus.isVirus(blockBelow))
-                {
-                    tmpScore += SCORE_VIRUS_MATCH;
-                }
-                else
-                {
-                    //but still some points if the Block matches
-                    tmpScore += SCORE_BLOCK_MATCH;
-                }
-                
-                //if Block matches and the column contains a virus, this is good becuase we are trying to get to the virus
-                if (hasVirus)
-                {
-                    tmpScore += SCORE_BLOCK_MATCH_VIRUS_COLUMN;
-                }
+                tmpScore += SCORE_VIRUS_MATCH;
             }
             else
             {
-                //the non-matching block is a virus
-                if (Virus.isVirus(blockBelow))
-                {
-                    //no match so add penalty
-                    tmpScore += SCORE_VIRUS_NO_MATCH;
-                }
-                else
-                {
-                    //no match so add penalty
-                    tmpScore += SCORE_BLOCK_NO_MATCH;
-                }
-                
-                //if we aren't matching and column has a virus we penalize even more
-                if (hasVirus)
-                {
-                    tmpScore += SCORE_BLOCK_NO_MATCH_VIRUS_COLUMN;
-                }
+                //but still some points if the Block matches
+                tmpScore += SCORE_BLOCK_MATCH;
             }
-            
-            
-            //if the block below is directly below
-            if (blockPill.getRow() + 1 == blockBelow.getRow())
+
+            //if Block matches and the column contains a virus, this is good becuase we are trying to get to the virus
+            if (hasVirus)
             {
-                //if we are close to the top of the board (danger zone)
-                if (blockPill.getRow() < Board.MATCH_MINIMUM)
-                {
-                    //if block matches add extra score
-                    if (blockPill.hasMatch(blockBelow.getType()))
-                    {
-                        tmpScore += SCORE_DANGER_ZONE_MATCH;
-                    }
-                    else
-                    {
-                        //if the block does not match add extra penalty
-                        tmpScore += SCORE_DANGER_ZONE_NO_MATCH;
-                    }
-                }
+                tmpScore += SCORE_BLOCK_MATCH_VIRUS_COLUMN;
+            }
+        }
+        else
+        {
+            //the non-matching block is a virus
+            if (Virus.isVirus(blockBelow))
+            {
+                //no match so add penalty
+                tmpScore += SCORE_VIRUS_NO_MATCH;
             }
             else
             {
-                //the block below is not directly below so there is a gap
-                
-                //if we are close to the top of the board (danger zone)
-                if (blockPill.getRow() < Board.MATCH_MINIMUM)
-                {
-                    //make sure the gap below matches
-                    if (blockPill.hasMatch(blockBelow.getType()))
-                    {
-                        //if a block kill was made then this pill will fall
-                        if (blockKill)
-                        {
-                            tmpScore += -50;
-                            
-                            //we don't want it to fall to a location in the danger zone
-                            if (blockBelow.getRow() < Board.MATCH_MINIMUM)
-                            {
-                                //tmpScore += -50;
-                            }
-                            else
-                            {
-                                //this is ok because the piece dropped will be out of the danger zone
-                                //tmpScore += 25;
-                            }
-                        }
-                        else
-                        {
-                            //there was not a block kill so lets avoid
-                            tmpScore += -25;
-                        }
-                    }
-                    else
-                    {
-                        //pill does not match and is in danger zone, so bad idea
-                        tmpScore += -50;
-                    }
-                }
+                //no match so add penalty
+                tmpScore += SCORE_BLOCK_NO_MATCH;
+            }
+
+            //if we aren't matching and column has a virus we penalize even more
+            if (hasVirus)
+            {
+                tmpScore += SCORE_BLOCK_NO_MATCH_VIRUS_COLUMN;
             }
         }
         
