@@ -25,22 +25,22 @@ public final class Manager implements IElement
     
     public Manager(final Engine engine) throws Exception
     {
-        //1500 milliseconds per each Pill drop
-        final long gravityDelay = 1500L;
+        //x amount of milliseconds per each Pill drop
+        final long gravityDelay = 3000L;
         
         //the delay per each movement for the Artifical Intelligence
-        final long movementDelay = 10L;//250L;
+        final long movementDelay = 250L;
         
-        //player = new Human(gravityDelay);
+        player = new Human(new Rectangle(0,0,256, 224), gravityDelay);
         
         //our List of AI opponents
         agents = new ArrayList<>();
         
-        final int opponentCount = 7;
+        final int opponentCount = 0;
         
         for (int i=0; i < opponentCount; i++)
         {
-            agents.add(new Agent(gravityDelay, movementDelay));
+            //agents.add(new Agent(gravityDelay, movementDelay));
         }
         
         createBoards();
@@ -51,20 +51,16 @@ public final class Manager implements IElement
      */
     private void createBoards() throws Exception
     {
-        Rectangle container = new Rectangle(50, 25, 160, 320);
-        
         if (player != null)
         {
-            player.createBoard(container, virusCount);
-            container.x += container.width;
+            player.createBoard(virusCount);
         }
         
         if (agents != null && agents.size() > 0)
         {
             for (Agent agent : agents)
             {
-                agent.createBoard(container, virusCount);
-                container.x += container.width;
+                //agent.createBoard(container, virusCount);
             }
         }
     }
@@ -130,7 +126,7 @@ public final class Manager implements IElement
     {
         if (player != null)
         {
-            //draw the player's current Pill and Board
+            //draw the player's screen
             player.render(graphics);
         }
             
@@ -138,7 +134,7 @@ public final class Manager implements IElement
         {
             for (Agent agent : agents)
             {
-                //draw the AI's current Pill and Board
+                //draw the AI's screen
                 agent.render(graphics);
             }
         }

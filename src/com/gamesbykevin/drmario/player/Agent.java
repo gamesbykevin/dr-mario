@@ -3,14 +3,14 @@ package com.gamesbykevin.drmario.player;
 import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 
-import com.gamesbykevin.drmario.shared.IElement;
-
 import com.gamesbykevin.drmario.block.Block;
 import com.gamesbykevin.drmario.block.Pill.Rotation;
 import com.gamesbykevin.drmario.block.Virus;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.shared.IElement;
 
+import java.awt.Rectangle;
 import java.util.List;
 
 /**
@@ -20,13 +20,13 @@ import java.util.List;
 public final class Agent extends Player implements IElement
 {
     //score to add for every virus kill, highest priority
-    private static final int SCORE_VIRUS_KILL = 500;
+    private static final int SCORE_VIRUS_KILL = 150;
     
     //score to add for every pill kill
-    private static final int SCORE_PILL_KILL = 50;
+    private static final int SCORE_PILL_KILL = 25;
     
     //score to add when adding pill on top of matching virus
-    private static final int SCORE_VIRUS_MATCH = 45;
+    private static final int SCORE_VIRUS_MATCH = 50;
     
     //score to add when adding pill on top of matching pill
     private static final int SCORE_BLOCK_MATCH = 25;
@@ -37,30 +37,24 @@ public final class Agent extends Player implements IElement
     //score to deduct when placing pill on top of non-matching pill
     private static final int SCORE_BLOCK_NO_MATCH = -25;
     
-    //when both Block(s) in the Pill are in the same column and match
-    private static final int SCORE_SAME_COLUMN_MATCH = 25;
-    
-    //when both Block(s) in the Pill are in the same column and they don't match
-    private static final int SCORE_SAME_COLUMN_NO_MATCH = -85;
-    
     //if the block matches and in the same column there is a virus, we need this so the agent will work towards mining down to get to the virus
-    private static final int SCORE_BLOCK_MATCH_VIRUS_COLUMN = 25;
+    private static final int SCORE_BLOCK_MATCH_VIRUS_COLUMN = 45;
     
     //if the block does not match and same has a virus, we need this so the agent will avoid these locations
     private static final int SCORE_BLOCK_NO_MATCH_VIRUS_COLUMN = -25;
     
-    //we are very close to the top and the block(s) match
-    private static final int SCORE_DANGER_ZONE_MATCH = 125;
+    //the penalty for each row
+    private static final int SCORE_HEIGHT = -5;
     
-    //we are very close to the top and the block(s) don't match, this is bad because we won't be able to match the block(s)
-    private static final int SCORE_DANGER_ZONE_NO_MATCH = -500;
+    //we are very close to the top and the block(s) don't match
+    private static final int SCORE_DANGER_ZONE_NO_MATCH = -350;
     
     //the Timer that determines when the Agent can move
     private Timer movementTimer;
     
-    public Agent(final long dropDelay, final long moveDelay) throws Exception
+    public Agent(final Rectangle container, final long dropDelay, final long moveDelay) throws Exception
     {
-        super(dropDelay);
+        super(container, dropDelay);
         
         //create a new Timer that calculates the delay between each move
         this.movementTimer = new Timer(TimerCollection.toNanoSeconds(moveDelay));
@@ -281,56 +275,11 @@ public final class Agent extends Player implements IElement
             tmpScore += (countPill  * SCORE_PILL_KILL);
         }
         
-        final boolean blockKill = ((countVirus > 0) || (countPill > 0));
-        
-        //if the columns are the same score accordingly
-        if (getPill().getCol() == getPill().getExtra().getCol())
-        {
-            //if both pills are in the same column add a bonus if they match
-            if (getPill().hasMatch(getPill().getExtra().getType()))
-            {
-                tmpScore += SCORE_SAME_COLUMN_MATCH;
-            }
-            else
-            {
-                //penalize otherwise
-                tmpScore += SCORE_SAME_COLUMN_NO_MATCH;
-            }
-        }
-        
-        //are we in the danger zone
-        if (getPill().getRow() < Board.MATCH_MINIMUM || getPill().getExtra().getRow() < Board.MATCH_MINIMUM)
-        {
-            if (block != null && extraBlock != null)
-            {
-                //are both Blocks directly below the pill, that means no gap is created
-                if (getPill().getRow() + 1 == block.getRow() && getPill().getExtra().getRow() + 1 == extraBlock.getRow())
-                {
-                    //do both Block(s) below match as well
-                    if (getPill().hasMatch(block.getType()) && getPill().getExtra().hasMatch(extraBlock.getType()))
-                    {
-                        //add reward
-                        tmpScore += SCORE_DANGER_ZONE_MATCH;
-                    }
-                    else
-                    {
-                        //add penalty
-                        tmpScore += SCORE_DANGER_ZONE_NO_MATCH;
-                    }
-                }
-                else
-                {
-                    //a gap is being created
-                    tmpScore += -100;
-                }
-            }
-        }
-        
         //calculate the score for the Pill Block
-        tmpScore += scoreBlock(getPill(), block, blockKill);
+        tmpScore += scoreBlock(getPill(), block);
         
         //calculate the score for the Pill extra Block
-        tmpScore += scoreBlock(getPill().getExtra(), extraBlock, blockKill);
+        tmpScore += scoreBlock(getPill().getExtra(), extraBlock);
         
         //remove the pill we placed on the getBoard()
         getBoard().removeBlock(getPill());
@@ -345,7 +294,7 @@ public final class Agent extends Player implements IElement
      * @param blockBelow The Block we are placing our blockPill on top of
      * @return int the score sum
      */
-    private int scoreBlock(final Block blockPill, final Block blockBelow, final boolean blockKill)
+    private int scoreBlock(final Block blockPill, final Block blockBelow)
     {
         int tmpScore = 0;
         
@@ -369,10 +318,21 @@ public final class Agent extends Player implements IElement
                 tmpScore += SCORE_BLOCK_MATCH;
             }
 
-            //if Block matches and the column contains a virus, this is good becuase we are trying to get to the virus
+            //if Block matches and the column contains a virus, this is good because we are trying to get to the virus
             if (hasVirus)
             {
                 tmpScore += SCORE_BLOCK_MATCH_VIRUS_COLUMN;
+            }
+            
+            //block isn't directly below so a gap is created
+            if (blockPill.getRow() + 1 != blockBelow.getRow())
+            {
+                //are we also in the danger zone
+                if (blockPill.getRow() < Board.MATCH_MINIMUM)
+                {
+                    //add additional height penalty
+                    tmpScore += ((getBoard().getRows() - blockPill.getRow()) * SCORE_HEIGHT);
+                }
             }
         }
         else
@@ -394,7 +354,20 @@ public final class Agent extends Player implements IElement
             {
                 tmpScore += SCORE_BLOCK_NO_MATCH_VIRUS_COLUMN;
             }
+            
+            //are we in the danger zone
+            if (blockPill.getRow() < Board.MATCH_MINIMUM)
+            {
+                //add additional penalty
+                tmpScore += SCORE_DANGER_ZONE_NO_MATCH;
+            }
+            
+            //add extra penalty for height since the Block(s) don't match
+            tmpScore += ((getBoard().getRows() - blockPill.getRow()) * SCORE_HEIGHT);
         }
+        
+        //also penaliza depending on the height based on height
+        tmpScore += ((getBoard().getRows() - blockPill.getRow()) * SCORE_HEIGHT);
         
         return tmpScore;
     }

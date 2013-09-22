@@ -1,7 +1,9 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.drmario.block.Block.Type;
-import com.gamesbykevin.drmario.board.Board;
+import com.gamesbykevin.framework.base.SpriteSheetAnimation;
+import com.gamesbykevin.framework.util.TimerCollection;
+import java.awt.Rectangle;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,12 +15,53 @@ import java.util.Random;
  */
 public class Virus extends Block implements IBlock
 {
+    //animation for board virus
+    private static final Rectangle BOARD_VIRUS_BLUE_1 = new Rectangle(84, 138, 9, 9);
+    private static final Rectangle BOARD_VIRUS_BLUE_2 = new Rectangle(95, 139, 9, 8);
+    
+    //animation for board virus
+    private static final Rectangle BOARD_VIRUS_YELLOW_1 = new Rectangle(84, 149, 9, 9);
+    private static final Rectangle BOARD_VIRUS_YELLOW_2 = new Rectangle(95, 149, 9, 9);
+    
+    //animation for board virus
+    private static final Rectangle BOARD_VIRUS_RED_1 = new Rectangle(84, 160, 9, 9);
+    private static final Rectangle BOARD_VIRUS_RED_2 = new Rectangle(95, 160, 9, 9);
+    
     public Virus(final Random random) throws Exception
     {
         super();
-        
+
         //assign random Type
         super.setType(getRandom(random));
+        
+        //create sprite sheet
+        super.createSpriteSheet();
+        
+        //object we will use for our sprite sheet animation
+        SpriteSheetAnimation animation = new SpriteSheetAnimation();
+        
+        switch(super.getType())
+        {
+            case BlueVirus:
+                animation.add(BOARD_VIRUS_BLUE_1, TimerCollection.toNanoSeconds(250L));
+                animation.add(BOARD_VIRUS_BLUE_2, TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case YellowVirus:
+                animation.add(BOARD_VIRUS_YELLOW_1, TimerCollection.toNanoSeconds(250L));
+                animation.add(BOARD_VIRUS_YELLOW_2, TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case RedVirus:
+                animation.add(BOARD_VIRUS_RED_1, TimerCollection.toNanoSeconds(250L));
+                animation.add(BOARD_VIRUS_RED_2, TimerCollection.toNanoSeconds(250L));
+                break;
+        }
+        
+        //all will loop
+        animation.setLoop(true);
+        super.getSpriteSheet().add(animation, AnimationKey.Alive);
+        super.getSpriteSheet().setCurrent(AnimationKey.Alive);
     }
     
     /**

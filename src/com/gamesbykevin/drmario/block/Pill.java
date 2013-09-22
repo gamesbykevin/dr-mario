@@ -1,11 +1,13 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Cell;
+import com.gamesbykevin.framework.base.SpriteSheetAnimation;
+import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.block.Block.Type;
-import com.gamesbykevin.drmario.board.Board;
 
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,6 +23,11 @@ public class Pill extends Block implements IBlock
     
     //this will contain the previous location should we rotate Pill
     private Cell previous;
+    
+    //our pill locations on the sprite sheet
+    private static final Rectangle PILL_YELLOW = new Rectangle(70, 136, 9, 9);
+    private static final Rectangle PILL_RED    = new Rectangle(70, 158, 9, 9);
+    private static final Rectangle PILL_BLUE   = new Rectangle(70, 147, 9, 9);
     
     /**
      * The different rotations of each Pill
@@ -51,6 +58,32 @@ public class Pill extends Block implements IBlock
         
         //we start with the Pill facing East
         this.rotationIndex = 0;
+        
+        //create sprite sheet
+        super.createSpriteSheet();
+        
+        //object we will use for our sprite sheet animation
+        SpriteSheetAnimation animation = new SpriteSheetAnimation();
+        
+        switch(super.getType())
+        {
+            case BluePill:
+                animation.add(PILL_BLUE,   TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case YellowPill:
+                animation.add(PILL_YELLOW, TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case RedPill:
+                animation.add(PILL_RED,    TimerCollection.toNanoSeconds(250L));
+                break;
+        }
+        
+        //no loop because they are all single frame
+        animation.setLoop(false);
+        super.getSpriteSheet().add(animation, AnimationKey.Alive);
+        super.getSpriteSheet().setCurrent(AnimationKey.Alive);
     }
     
     /**

@@ -21,11 +21,16 @@ public class Resources implements IResources
     //collections of resources
     private enum Type
     {
-        MenuImage, MenuAudio, Fonts, 
+        MenuImage, MenuAudio, Fonts, GameImage
     }
     
     //root directory of all resources
     public static final String RESOURCE_DIR = "resources/"; 
+    
+    public enum GameImage
+    {
+        Spritesheet
+    }
     
     public enum MenuAudio
     {
@@ -50,6 +55,9 @@ public class Resources implements IResources
     public Resources() throws Exception
     {
         everyResource = new LinkedHashMap<>();
+        
+        //load single sprite sheet
+        add(Type.GameImage, (Object[])GameImage.values(), RESOURCE_DIR + "images/game/{0}.png", "Loading Game Image Resources", Manager.Type.Image);
         
         //load all menu images
         add(Type.MenuImage, (Object[])MenuImage.values(), RESOURCE_DIR + "images/menu/{0}.gif", "Loading Menu Image Resources", Manager.Type.Image);
@@ -92,6 +100,11 @@ public class Resources implements IResources
     public Font getFont(final Object key)
     {
         return getResources(Type.Fonts).getFont(key);
+    }
+    
+    public Image getGameImage(final Object key)
+    {
+        return getResources(Type.GameImage).getImage(key);
     }
     
     public Image getMenuImage(final Object key)

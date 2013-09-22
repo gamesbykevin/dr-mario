@@ -25,6 +25,11 @@ public class Block extends Sprite implements Disposable
         YellowVirus
     }
     
+    public enum AnimationKey
+    {
+        Alive
+    }
+    
     //the type of block
     private Type type;
     
@@ -136,40 +141,33 @@ public class Block extends Sprite implements Disposable
     
     public void render(Graphics graphics)
     {
-        switch(type)
-        {
-            case RedPill:
-            case RedVirus:
-                graphics.setColor(Color.RED);
-                break;
-                
-            case YellowPill:
-            case YellowVirus:
-                graphics.setColor(Color.YELLOW);
-                break;
-                
-            case BluePill:
-            case BlueVirus:
-                graphics.setColor(Color.BLUE);
-                break;
-        }
-        
         if (!isDead())
         {
-            if (Pill.isPill(type))
-                graphics.fillOval((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
-            if (Virus.isVirus(type))
-                graphics.fillRect((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
+            //image will be drawn in Board.class
         }
         else
         {
-            if (Pill.isPill(type))
-                graphics.drawOval((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
-            if (Virus.isVirus(type))
-                graphics.drawRect((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
+            //set the correct color accordingly
+            switch(type)
+            {
+                case RedPill:
+                case RedVirus:
+                    graphics.setColor(Color.RED);
+                    break;
+
+                case YellowPill:
+                case YellowVirus:
+                    graphics.setColor(Color.YELLOW);
+                    break;
+
+                case BluePill:
+                case BlueVirus:
+                    graphics.setColor(Color.BLUE);
+                    break;
+            }
+            
+            //empty circle will be drawn when dead
+            graphics.drawOval((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
         }
-        
-        //draw the block in the future as the appropriate image will be set
-        //super.draw(graphics);
     }
 }

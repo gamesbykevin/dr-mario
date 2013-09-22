@@ -7,11 +7,10 @@ import com.gamesbykevin.framework.util.*;
 import com.gamesbykevin.drmario.block.*;
 import com.gamesbykevin.drmario.block.Block.*;
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.resource.Resources.GameImage;
 import com.gamesbykevin.drmario.shared.IElement;
 
-import java.awt.Color;
 import java.awt.Graphics;
-import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -27,9 +26,6 @@ public class Board extends Sprite implements IElement
     
     //if any blocks need to be marked as dead they will be contained in here
     private List<Block> deadBlocks;
-    
-    //the total number of columns and rows in our Board
-    private int cols, rows;
     
     //minimum amount of pieces needed for a match
     public static final int MATCH_MINIMUM = 4;
@@ -56,12 +52,10 @@ public class Board extends Sprite implements IElement
     private Timer timer;
     
     //the time to show the dead blocks animation
-    //private static final long DEATH_TIME = TimerCollection.toNanoSeconds(500L);
-    private static final long DEATH_TIME = TimerCollection.toNanoSeconds(1L);
+    private static final long DEATH_TIME = TimerCollection.toNanoSeconds(500L);
     
     //the time to wait between dropping the Block(s)
-    //private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
-    private static final long DROP_TIME = TimerCollection.toNanoSeconds(1L);
+    private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
     
     //the dimensions for the board
     private static final int COLUMNS = 8;
@@ -78,15 +72,11 @@ public class Board extends Sprite implements IElement
      * @param rows The total number of rows
      * @param count The total number of viruses
      */
-    public Board(final Rectangle container, final int virusCount, final long seed)
+    public Board(final int virusCount, final long seed)
     {
         //set the location and dimensions of the entire board
-        super.setLocation(container.x, container.y);
-        super.setDimensions(container.width, container.height);
-        
-        //set the limits of the board
-        this.cols = COLUMNS;
-        this.rows = ROWS;
+        //super.setLocation(container.x, container.y);
+        //super.setDimensions(container.width, container.height);
         
         //create our random number generator object
         this.random = new Random(seed);
@@ -98,15 +88,15 @@ public class Board extends Sprite implements IElement
         this.virusCount = virusCount;
         
         //the blocks on the board
-        blocks = new Block[rows][cols];
+        blocks = new Block[getRows()][getCols()];
         
         //create a new list for the spawn locations
         locations = new ArrayList<>();
         
         //add all spawn locations so we can choose at random
-        for (int row=SPAWN_START_ROW; row < rows; row++)
+        for (int row = SPAWN_START_ROW; row < getRows(); row++)
         {
-            for (int col=0; col < cols; col++)
+            for (int col=0; col < getCols(); col++)
             {
                 locations.add(new Cell(col, row));
             }
@@ -204,6 +194,9 @@ public class Board extends Sprite implements IElement
     @Override
     public void update(final Engine engine) throws Exception
     {
+        if (getImage() == null)
+            setImage(engine.getResources().getGameImage(GameImage.Spritesheet));
+            
         //if we haven't reached our goal and there are still spawn locations
         if (!isSpawnComplete())
         {
@@ -273,6 +266,21 @@ public class Board extends Sprite implements IElement
                 }
             }
         }
+        
+        //update animations
+        for (Block[] row : blocks)
+        {
+            for (Block block : row)
+            {
+                if (block != null)
+                {
+                    if (!block.getSpriteSheet().hasDelay())
+                        block.getSpriteSheet().setDelay(engine.getMain().getTime());
+                    
+                    block.getSpriteSheet().update();
+                }
+            }
+        }
     }
     
     /**
@@ -289,9 +297,9 @@ public class Board extends Sprite implements IElement
             boolean finish = true;
             
             //start on the second to last row and go backwards
-            for (int row=rows - 2; row >= 0; row--)
+            for (int row = getRows() - 2; row >= 0; row--)
             {
-                for (int col=0; col < cols; col++)
+                for (int col=0; col < getCols(); col++)
                 {
                     final Block tmp = getBlock(col, row);
                     
@@ -466,9 +474,9 @@ public class Board extends Sprite implements IElement
         //list of matching blocks
         ArrayList<Block> deadBlocksTmp = new ArrayList<>();
         
-        for (int row=0; row < rows; row++)
+        for (int row=0; row < getRows(); row++)
         {
-            for (int col=0; col < cols; col++)
+            for (int col=0; col < getCols(); col++)
             {
                 Block block = getBlock(col, row);
 
@@ -480,17 +488,17 @@ public class Board extends Sprite implements IElement
                 final Type tmpType = block.getType();
 
                 //make sure we aren't soo close that there is no way we will make a match
-                if (col <= cols - MATCH_MINIMUM)
+                if (col <= getCols() - MATCH_MINIMUM)
                 {
                     //start at the current position and head east checking for all matching
-                    checkConsecutiveMatch(col, cols, row, tmpType, true, deadBlocksTmp);
+                    checkConsecutiveMatch(col, getCols(), row, tmpType, true, deadBlocksTmp);
                 }
                 
                 //make sure we aren't soo close that there is no way we will make a match
-                if (row <= rows - MATCH_MINIMUM)
+                if (row <= getRows() - MATCH_MINIMUM)
                 {
                     //start at the current position and head south checking for all matching
-                    checkConsecutiveMatch(row, rows, col, tmpType, false, deadBlocksTmp);
+                    checkConsecutiveMatch(row, getRows(), col, tmpType, false, deadBlocksTmp);
                 }
             }
         }
@@ -678,7 +686,7 @@ public class Board extends Sprite implements IElement
      */
     public int getCols()
     {
-        return this.cols;
+        return this.COLUMNS;
     }
     
     /**
@@ -687,7 +695,7 @@ public class Board extends Sprite implements IElement
      */
     public int getRows()
     {
-        return this.rows;
+        return this.ROWS;
     }
     
     public boolean hasCollision(final Pill pill)
@@ -701,14 +709,14 @@ public class Board extends Sprite implements IElement
      * parameter block is out of bounds.
      * 
      * @param block The Block we want to check for collision
-     * @return boolean Return true if the Block euqals any of the existing Block(s) on the board or if out of bounds
+     * @return boolean Return true if the Block equals any of the existing Block(s) on the board or if out of bounds
      */
     private boolean hasCollision(final Block block)
     {
         //there will be a collision if the user goes out of bounds
-        if (block.getCol() < 0 || block.getCol() > cols - 1)
+        if (block.getCol() < 0 || block.getCol() > getCols() - 1)
             return true;
-        if (block.getRow() < 0 || block.getRow() > rows - 1)
+        if (block.getRow() < 0 || block.getRow() > getRows() - 1)
             return true;
         
         //if an object exists then there is a collision
@@ -735,33 +743,28 @@ public class Board extends Sprite implements IElement
     @Override
     public void render(Graphics graphics)
     {
-        //draw outline of board for now
-        graphics.setColor(Color.WHITE);
-        graphics.drawRect((int)getX(), (int)getY(), (int)getWidth(), (int)getHeight());
+        if (getImage() == null)
+            return;
         
-        for (int row=0; row < rows; row++)
+        for (int row=0; row < getRows(); row++)
         {
-            for (int col=0; col < cols; col++)
+            for (int col=0; col < getCols(); col++)
             {
                 //draw the blocks that exist
                 if (getBlock(col, row) != null)
-                    getBlock(col, row).render(graphics);
+                {
+                    //if dead we want to draw the empty circle
+                    if (getBlock(col, row).isDead())
+                    {
+                        getBlock(col, row).render(graphics);
+                    }
+                    else
+                    {
+                        //else draw the Image
+                        getBlock(col, row).draw(graphics, getImage());
+                    }
+                }
             }
         }
-        
-        //draw virus counts
-        graphics.setFont(graphics.getFont().deriveFont(12f));
-        graphics.setColor(Color.WHITE);
-        
-        int r = getCount(Type.RedVirus);
-        int b = getCount(Type.BlueVirus);
-        int y = getCount(Type.YellowVirus);
-        
-        
-        graphics.drawString("R = " + r, (int)getX() - 45, (int)getY());
-        graphics.drawString("B = " + b, (int)getX() - 45, (int)getY() + 15);
-        graphics.drawString("Y = " + y, (int)getX() - 45, (int)getY() + 30);
-        
-        graphics.drawString("All = " + (r+b+y), (int)getX() - 45, (int)getY() + 60);
     }
 }

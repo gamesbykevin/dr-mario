@@ -5,6 +5,7 @@ import com.gamesbykevin.drmario.shared.IElement;
 import com.gamesbykevin.drmario.engine.Engine;
 
 import java.awt.event.KeyEvent;
+import java.awt.Rectangle;
 
 /**
  * The player will contain the pill piece and the input 
@@ -12,9 +13,9 @@ import java.awt.event.KeyEvent;
  */
 public final class Human extends Player implements IElement
 {
-    public Human(final long delay) throws Exception
+    public Human(final Rectangle container, final long delay) throws Exception
     {
-        super(delay);
+        super(container, delay);
     }
     
     /**
