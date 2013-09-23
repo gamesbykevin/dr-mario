@@ -1,12 +1,14 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Cell;
+import com.gamesbykevin.framework.base.Sprite;
 import com.gamesbykevin.framework.base.SpriteSheetAnimation;
 import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.block.Block.Type;
 
 import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,35 +39,36 @@ public class Pill extends Block implements IBlock
         East, South, West, North
     }
     
-    //which rotation are we currently at
-    private int rotationIndex;
+    //which rotation are we currently at, starting East
+    private int rotationIndex = 0;
     
-    public Pill(final Random random) throws Exception
+    public Pill()
     {
         super();
-        
-        //assign random Type
-        super.setType(getRandom(random));
         
         //create new Block since a Pill constists of 2 Block(s)
         extra = new Block();
         
-        //assign random Type
-        extra.setType(getRandom(random));
-        
-        //make extra Block part of the same group so we know they are one
+        //make the extra Block part of the same group so we know they are connected as one
         extra.setGroup(super.getGroup());
-        
-        //we start with the Pill facing East
-        this.rotationIndex = 0;
-        
+    }
+    
+    public void setup() throws Exception
+    {
+        setup(this);
+        setup(extra);
+    }
+    
+    @Override
+    public void setup(final Block block) throws Exception
+    {
         //create sprite sheet
-        super.createSpriteSheet();
+        block.createSpriteSheet();
         
         //object we will use for our sprite sheet animation
         SpriteSheetAnimation animation = new SpriteSheetAnimation();
         
-        switch(super.getType())
+        switch(block.getType())
         {
             case BluePill:
                 animation.add(PILL_BLUE,   TimerCollection.toNanoSeconds(250L));
@@ -78,12 +81,16 @@ public class Pill extends Block implements IBlock
             case RedPill:
                 animation.add(PILL_RED,    TimerCollection.toNanoSeconds(250L));
                 break;
+                
+            default:
+                throw new Exception("Block type has not been set yet.");
         }
         
         //no loop because they are all single frame
         animation.setLoop(false);
-        super.getSpriteSheet().add(animation, AnimationKey.Alive);
-        super.getSpriteSheet().setCurrent(AnimationKey.Alive);
+        block.getSpriteSheet().add(animation, AnimationKey.Alive);
+        block.getSpriteSheet().setCurrent(AnimationKey.Alive);
+        block.setDimensions();
     }
     
     /**
@@ -203,7 +210,7 @@ public class Pill extends Block implements IBlock
      * @return Type
      */
     @Override
-    public Type getRandom(final Random rand)
+    public void setRandom(final Random random)
     {
         List<Type> types = new ArrayList<>();
         
@@ -213,7 +220,8 @@ public class Pill extends Block implements IBlock
                 types.add(tmp);
         }
         
-        return types.get(rand.nextInt(types.size()));
+        super.setType(types.get(random.nextInt(types.size())));
+        extra.setType(types.get(random.nextInt(types.size())));
     }
     
     /**
@@ -307,9 +315,9 @@ public class Pill extends Block implements IBlock
     }
     
     @Override
-    public void render(final Graphics graphics)
+    public void render(final Graphics graphics, final Image image)
     {
-        super.render(graphics);
-        extra.render(graphics);
+        super.render(graphics, image);
+        extra.render(graphics, image);
     }
 }

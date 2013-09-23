@@ -5,6 +5,7 @@ import com.gamesbykevin.framework.resources.Disposable;
 
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.Image;
 
 /**
  * The block will represent one part of the pill used in the original game
@@ -40,8 +41,8 @@ public class Block extends Sprite implements Disposable
     private long group = System.nanoTime();
     
     //the dimensions of each block
-    protected static final int WIDTH = 20;
-    protected static final int HEIGHT = 20;
+    public static final int WIDTH = 9;
+    public static final int HEIGHT = 9;
     
     public Block(final Block block) throws Exception
     {
@@ -54,8 +55,8 @@ public class Block extends Sprite implements Disposable
         //remember the group as well so we know which Block(s) are connected
         setGroup(block.getGroup());
         
-        //set the dimensions of the Block
-        super.setDimensions(WIDTH, HEIGHT);
+        //is the block dead
+        setDead(block.isDead());
     }
     
     public Block()
@@ -68,19 +69,16 @@ public class Block extends Sprite implements Disposable
      */
     public void setPosition(final double startX, final double startY)
     {
-        final int x = (int)(startX + (getCol() * WIDTH));
-        final int y = (int)(startY + (getRow() * HEIGHT));
+        final int x = (int)(startX + (getCol() * (WIDTH - 1)  ) - (WIDTH * .1));
+        final int y = (int)(startY + (getRow() * (HEIGHT - 1) ));
 
         //set the appropriate location and dimensions
         setLocation(x, y);
         setDimensions(WIDTH, HEIGHT);
     }
     
-    public void setType(final Type type) throws Exception
+    public void setType(final Type type)
     {
-        if (getType() != null)
-            throw new Exception("The Block Type can only be set once");
-        
         this.type = type;
     }
     
@@ -139,11 +137,12 @@ public class Block extends Sprite implements Disposable
         return false;
     }
     
-    public void render(Graphics graphics)
+    public void render(final Graphics graphics, final Image image)
     {
         if (!isDead())
         {
-            //image will be drawn in Board.class
+            //if not dead draw the image according to the current animation
+            super.draw(graphics, image);
         }
         else
         {

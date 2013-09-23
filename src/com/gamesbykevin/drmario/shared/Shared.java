@@ -24,10 +24,10 @@ public class Shared
     public static final boolean DEBUG = true;
     
     //how many updates per second, controls speed of game
-    public static final int DEFAULT_UPS = 5000;
+    public static final int DEFAULT_UPS = 90;
     
     //how many frames per second, controls how many images are rendered
-    public static final int DEFAULT_FPS = 30;
+    public static final int DEFAULT_FPS = 60;
     
     //what is the name of our game
     public static final String GAME_NAME = "Dr. Mario";

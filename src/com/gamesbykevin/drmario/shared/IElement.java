@@ -20,8 +20,7 @@ public interface IElement extends Disposable
     public void update(final Engine engine) throws Exception;
     
     /**
-     * Draw our game element accordingly
-     * @param graphics Graphics object to write to
+     * Draw our game element(s) accordingly
      */
     public void render(final Graphics graphics);
 }

@@ -8,9 +8,9 @@ import com.gamesbykevin.drmario.block.Pill.Rotation;
 import com.gamesbykevin.drmario.block.Virus;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
 import com.gamesbykevin.drmario.shared.IElement;
 
-import java.awt.Rectangle;
 import java.util.List;
 
 /**
@@ -52,32 +52,50 @@ public final class Agent extends Player implements IElement
     //the Timer that determines when the Agent can move
     private Timer movementTimer;
     
-    public Agent(final Rectangle container, final long dropDelay, final long moveDelay) throws Exception
+    //movement delay for the differet speed(s)
+    private static final long SPEED_LOW = TimerCollection.toNanoSeconds(750L);
+    private static final long SPEED_MED = TimerCollection.toNanoSeconds(250L);
+    private static final long SPEED_HI  = TimerCollection.toNanoSeconds(125L);
+    
+    public Agent()
     {
-        super(container, dropDelay);
+        super();
         
+        //we are not human
+        super.setHuman(false);
+    }
+    
+    @Override
+    public void setSpeed(final SpeedKey speedKey)
+    {
         //create a new Timer that calculates the delay between each move
-        this.movementTimer = new Timer(TimerCollection.toNanoSeconds(moveDelay));
+        switch(speedKey)
+        {
+            case Low:
+                this.movementTimer = new Timer(SPEED_LOW);
+                break;
+                
+            case Medium:
+                this.movementTimer = new Timer(SPEED_MED);
+                break;
+                
+            case High:
+                this.movementTimer = new Timer(SPEED_HI);
+                break;
+        }
         
-        if (dropDelay <= moveDelay)
-            throw new Exception("The drop delay has to be greater than the move delay.");
+        //set speed for display purposes
+        super.setSpeed(speedKey);
     }
     
     @Override
     public void update(final Engine engine) throws Exception
     {
-        //if the player has lost or won no more updates are required
-        if (hasLose() || hasWin())
-            return;
-        
-        //check for matches on board etc...
-        getBoard().update(engine);
+        super.update(engine);
         
         //if we can't interact with the board due to a virus/pill match or pill drop etc..
         if (!getBoard().canInteract())
             return;
-        
-        super.update(engine);
         
         //if the goal is not set we need to find one
         if (getGoal() == null)

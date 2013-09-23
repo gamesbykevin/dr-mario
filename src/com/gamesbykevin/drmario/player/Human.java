@@ -13,9 +13,14 @@ import java.awt.Rectangle;
  */
 public final class Human extends Player implements IElement
 {
-    public Human(final Rectangle container, final long delay) throws Exception
+    private Rectangle imageDestination;
+    
+    public Human() throws Exception
     {
-        super(container, delay);
+        super();
+        
+        //we are human
+        super.setHuman(true);
     }
     
     /**
@@ -25,18 +30,11 @@ public final class Human extends Player implements IElement
     @Override
     public void update(final Engine engine) throws Exception
     {
-        //if the player has lost no more updates required
-        if (hasLose() || hasWin())
-            return;
-        
-        //check for matches on board etc...
-        getBoard().update(engine);
+        super.update(engine);
         
         //if we can't interact with the board due to a virus/pill match or pill drop etc..
         if (!getBoard().canInteract())
             return;
-        
-        super.update(engine);
         
         //if the Pill does not exist we don't need to worry about keyboard input
         if (getPill() == null)

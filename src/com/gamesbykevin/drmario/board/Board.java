@@ -7,7 +7,6 @@ import com.gamesbykevin.framework.util.*;
 import com.gamesbykevin.drmario.block.*;
 import com.gamesbykevin.drmario.block.Block.*;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources.GameImage;
 import com.gamesbykevin.drmario.shared.IElement;
 
 import java.awt.Graphics;
@@ -19,7 +18,7 @@ import java.util.Random;
  * The board where the viruses and pills will be contained
  * @author GOD
  */
-public class Board extends Sprite implements IElement
+public class Board extends Sprite
 {
     //this List will contain all of the blocks on the board
     private Block[][] blocks;
@@ -74,10 +73,6 @@ public class Board extends Sprite implements IElement
      */
     public Board(final int virusCount, final long seed)
     {
-        //set the location and dimensions of the entire board
-        //super.setLocation(container.x, container.y);
-        //super.setDimensions(container.width, container.height);
-        
         //create our random number generator object
         this.random = new Random(seed);
         
@@ -88,15 +83,15 @@ public class Board extends Sprite implements IElement
         this.virusCount = virusCount;
         
         //the blocks on the board
-        blocks = new Block[getRows()][getCols()];
+        blocks = new Block[ROWS][COLUMNS];
         
         //create a new list for the spawn locations
         locations = new ArrayList<>();
         
         //add all spawn locations so we can choose at random
-        for (int row = SPAWN_START_ROW; row < getRows(); row++)
+        for (int row = SPAWN_START_ROW; row < ROWS; row++)
         {
-            for (int col=0; col < getCols(); col++)
+            for (int col=0; col < COLUMNS; col++)
             {
                 locations.add(new Cell(col, row));
             }
@@ -191,12 +186,8 @@ public class Board extends Sprite implements IElement
      * @param engine
      * @throws Exception 
      */
-    @Override
     public void update(final Engine engine) throws Exception
     {
-        if (getImage() == null)
-            setImage(engine.getResources().getGameImage(GameImage.Spritesheet));
-            
         //if we haven't reached our goal and there are still spawn locations
         if (!isSpawnComplete())
         {
@@ -272,7 +263,7 @@ public class Board extends Sprite implements IElement
         {
             for (Block block : row)
             {
-                if (block != null)
+                if (block != null && block.getSpriteSheet() != null)
                 {
                     if (!block.getSpriteSheet().hasDelay())
                         block.getSpriteSheet().setDelay(engine.getMain().getTime());
@@ -438,6 +429,26 @@ public class Board extends Sprite implements IElement
         deadBlocks.clear();
     }
     
+    /**
+     * Check if the Block Type is found in the List of dead blocks.<br><br>
+     * If the List of dead blocks is empty then no matches have been found and false is returned.
+     * @param type The type of Block we are looking for
+     * @return boolean True if found.
+     */
+    public boolean hasDeadType(final Type type)
+    {
+        if (deadBlocks.isEmpty())
+            return false;
+        
+        for (Block block : deadBlocks)
+        {
+            if (block.getType() == type)
+                return true;
+        }
+        
+        return false;
+    }
+    
     private void spawnVirus() throws Exception
     {
         //pick a random index
@@ -450,8 +461,14 @@ public class Board extends Sprite implements IElement
         Cell tmp = locations.get(index);
 
         //create new virus
-        Virus virus = new Virus(random);
-
+        Virus virus = new Virus();
+        
+        //set random type
+        virus.setRandom(random);
+        
+        //setup animations
+        virus.setup();
+        
         //set the correct Column, Row
         virus.setCol(tmp);
         virus.setRow(tmp);
@@ -738,33 +755,5 @@ public class Board extends Sprite implements IElement
         //add the Block(s) to the board
         setBlock(pill.getCol(), pill.getRow(), new Block(pill));
         setBlock(pill.getExtra().getCol(), pill.getExtra().getRow(), new Block(pill.getExtra()));
-    }
-    
-    @Override
-    public void render(Graphics graphics)
-    {
-        if (getImage() == null)
-            return;
-        
-        for (int row=0; row < getRows(); row++)
-        {
-            for (int col=0; col < getCols(); col++)
-            {
-                //draw the blocks that exist
-                if (getBlock(col, row) != null)
-                {
-                    //if dead we want to draw the empty circle
-                    if (getBlock(col, row).isDead())
-                    {
-                        getBlock(col, row).render(graphics);
-                    }
-                    else
-                    {
-                        //else draw the Image
-                        getBlock(col, row).draw(graphics, getImage());
-                    }
-                }
-            }
-        }
     }
 }

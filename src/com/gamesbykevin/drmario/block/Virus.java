@@ -3,6 +3,8 @@ package com.gamesbykevin.drmario.block;
 import com.gamesbykevin.drmario.block.Block.Type;
 import com.gamesbykevin.framework.base.SpriteSheetAnimation;
 import com.gamesbykevin.framework.util.TimerCollection;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.Rectangle;
 
 import java.util.ArrayList;
@@ -27,53 +29,66 @@ public class Virus extends Block implements IBlock
     private static final Rectangle BOARD_VIRUS_RED_1 = new Rectangle(84, 160, 9, 9);
     private static final Rectangle BOARD_VIRUS_RED_2 = new Rectangle(95, 160, 9, 9);
     
-    public Virus(final Random random) throws Exception
+    //time delay for each frame in the animation
+    private static final long BLUE_DELAY = TimerCollection.toNanoSeconds(333L);
+    private static final long YELLOW_DELAY = TimerCollection.toNanoSeconds(150L);
+    private static final long RED_DELAY = TimerCollection.toNanoSeconds(250L);
+    
+    public Virus()
     {
         super();
-
-        //assign random Type
-        super.setType(getRandom(random));
-        
+    }
+    
+    public void setup() throws Exception
+    {
+        setup(this);
+    }
+    
+    @Override
+    public void setup(final Block block) throws Exception
+    {
         //create sprite sheet
-        super.createSpriteSheet();
+        block.createSpriteSheet();
         
         //object we will use for our sprite sheet animation
         SpriteSheetAnimation animation = new SpriteSheetAnimation();
         
-        switch(super.getType())
+        switch(block.getType())
         {
             case BlueVirus:
-                animation.add(BOARD_VIRUS_BLUE_1, TimerCollection.toNanoSeconds(250L));
-                animation.add(BOARD_VIRUS_BLUE_2, TimerCollection.toNanoSeconds(250L));
+                animation.add(BOARD_VIRUS_BLUE_1, BLUE_DELAY);
+                animation.add(BOARD_VIRUS_BLUE_2, BLUE_DELAY);
                 break;
                 
             case YellowVirus:
-                animation.add(BOARD_VIRUS_YELLOW_1, TimerCollection.toNanoSeconds(250L));
-                animation.add(BOARD_VIRUS_YELLOW_2, TimerCollection.toNanoSeconds(250L));
+                animation.add(BOARD_VIRUS_YELLOW_1, YELLOW_DELAY);
+                animation.add(BOARD_VIRUS_YELLOW_2, YELLOW_DELAY);
                 break;
                 
             case RedVirus:
-                animation.add(BOARD_VIRUS_RED_1, TimerCollection.toNanoSeconds(250L));
-                animation.add(BOARD_VIRUS_RED_2, TimerCollection.toNanoSeconds(250L));
+                animation.add(BOARD_VIRUS_RED_1, RED_DELAY);
+                animation.add(BOARD_VIRUS_RED_2, RED_DELAY);
                 break;
+                
+            default:
+                throw new Exception("Block type has not been set yet.");
         }
         
         //all will loop
         animation.setLoop(true);
-        super.getSpriteSheet().add(animation, AnimationKey.Alive);
-        super.getSpriteSheet().setCurrent(AnimationKey.Alive);
+        block.getSpriteSheet().add(animation, AnimationKey.Alive);
+        block.getSpriteSheet().setCurrent(AnimationKey.Alive);
+        block.setDimensions();
     }
     
     /**
-     * Get a random Type of Virus.
+     * Set a random Type of Virus.
      * Blue Virus, Yellow Virus, Red Virus
      * 
      * @param rand The random object used to generate a random index
-     * 
-     * @return Type
      */
     @Override
-    public Type getRandom(final Random rand)
+    public void setRandom(final Random random)
     {
         List<Type> types = new ArrayList<>();
         
@@ -83,7 +98,7 @@ public class Virus extends Block implements IBlock
                 types.add(tmp);
         }
         
-        return types.get(rand.nextInt(types.size()));
+        super.setType(types.get(random.nextInt(types.size())));
     }
     
     public static boolean isVirus(final Block block)
