@@ -3,9 +3,9 @@ package com.gamesbykevin.drmario.player;
 import com.gamesbykevin.drmario.shared.IElement;
 
 import com.gamesbykevin.drmario.engine.Engine;
+import java.awt.Rectangle;
 
 import java.awt.event.KeyEvent;
-import java.awt.Rectangle;
 
 /**
  * The player will contain the pill piece and the input 
@@ -13,11 +13,9 @@ import java.awt.Rectangle;
  */
 public final class Human extends Player implements IElement
 {
-    private Rectangle imageDestination;
-    
-    public Human() throws Exception
+    public Human(final Rectangle renderLocation) throws Exception
     {
-        super();
+        super(renderLocation);
         
         //we are human
         super.setHuman(true);
@@ -31,6 +29,10 @@ public final class Human extends Player implements IElement
     public void update(final Engine engine) throws Exception
     {
         super.update(engine);
+        
+        //if we won or lost no need to check for keyboard input
+        if (hasWin() || hasLose())
+            return;
         
         //if we can't interact with the board due to a virus/pill match or pill drop etc..
         if (!getBoard().canInteract())
@@ -91,8 +93,8 @@ public final class Human extends Player implements IElement
             //now that the blocked moved check for collision
             if (getBoard().hasCollision(getPill()))
             {
-                //move the blocks back
                 getPill().decreaseCol();
+                //move the blocks back;
             }
             
             engine.getKeyboard().removeKeyPressed(KeyEvent.VK_RIGHT);

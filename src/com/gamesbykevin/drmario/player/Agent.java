@@ -10,6 +10,7 @@ import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
 import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
 import com.gamesbykevin.drmario.shared.IElement;
+import java.awt.Rectangle;
 
 import java.util.List;
 
@@ -57,9 +58,9 @@ public final class Agent extends Player implements IElement
     private static final long SPEED_MED = TimerCollection.toNanoSeconds(250L);
     private static final long SPEED_HI  = TimerCollection.toNanoSeconds(125L);
     
-    public Agent()
+    public Agent(final Rectangle renderLocation)
     {
-        super();
+        super(renderLocation);
         
         //we are not human
         super.setHuman(false);
@@ -92,6 +93,10 @@ public final class Agent extends Player implements IElement
     public void update(final Engine engine) throws Exception
     {
         super.update(engine);
+        
+        //if we won or lost no need to check for keyboard input
+        if (hasWin() || hasLose())
+            return;
         
         //if we can't interact with the board due to a virus/pill match or pill drop etc..
         if (!getBoard().canInteract())
@@ -415,7 +420,6 @@ public final class Agent extends Player implements IElement
     /**
      * Check the specified column to determine if a virus exists.
      * @param col The column we want to start at.
-     * @param board The board where the viruses are located so we can check if they exist.
      * @return True if a virus is located in the column, false otherwise
      */
     private boolean hasVirus(final int col)

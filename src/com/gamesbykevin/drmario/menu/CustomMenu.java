@@ -25,11 +25,12 @@ public class CustomMenu extends Menu
     private Object previousLayerKey;
     
     //unique object to identify each Option
-    public enum OptionKey
-    {
+    public enum OptionKey 
+    { 
         Sound, FullScreen, StartGame, Options, Controls, Instructions, Credits, GoBack, Resume, 
         NewGame, ExitGame, NewGameConfim, NewGameDeny, ExitGameConfirm, ExitGameDeny, 
-    }
+        Level, Speed, Mode, OpponentTotal 
+    } 
     
     //unique key to indentify each Layer
     public enum LayerKey 

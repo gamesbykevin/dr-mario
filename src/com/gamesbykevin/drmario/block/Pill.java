@@ -53,14 +53,14 @@ public class Pill extends Block implements IBlock
         extra.setGroup(super.getGroup());
     }
     
-    public void setup() throws Exception
+    public void setup()
     {
         setup(this);
         setup(extra);
     }
     
     @Override
-    public void setup(final Block block) throws Exception
+    public void setup(final Block block)
     {
         //create sprite sheet
         block.createSpriteSheet();
@@ -81,9 +81,6 @@ public class Pill extends Block implements IBlock
             case RedPill:
                 animation.add(PILL_RED,    TimerCollection.toNanoSeconds(250L));
                 break;
-                
-            default:
-                throw new Exception("Block type has not been set yet.");
         }
         
         //no loop because they are all single frame

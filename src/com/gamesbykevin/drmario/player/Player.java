@@ -14,6 +14,7 @@ import com.gamesbykevin.framework.util.TimerCollection;
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.awt.Rectangle;
 import java.util.Random;
 
 /**
@@ -31,8 +32,11 @@ public class Player extends PlayerInformation implements IElement
     //the start location for the Pill
     protected static final Cell START = new Cell(3, 0);
     
+    //other starting location for the pill
+    protected static final Cell START1 = new Cell(4, 0);
+    
     //our timer object to determine when the pieces should drop
-    private Timer gravityTimer;
+    private Timer gravityTimer, gameTimer;
     
     //has the player lost
     private boolean lose = false;
@@ -60,13 +64,16 @@ public class Player extends PlayerInformation implements IElement
     //we will write all player objects etc... to this single image
     private BufferedImage playerImage;
     
+    //where the buffered image will be drawn and the dimensions as well
+    private final Rectangle renderLocation;
+    
     /**
      * Create a new timer with the specified delay that will determine the duration
      * between Pill drops.
      * @param container the overall dimensions of this game
      * @param delay The time delay in milliseconds
      */
-    public Player()
+    public Player(final Rectangle renderLocation)
     {
         super();
         
@@ -75,6 +82,21 @@ public class Player extends PlayerInformation implements IElement
         
         //set a random background
         super.setBackground(random);
+        
+        //create our buffered image object
+        playerImage = new BufferedImage(SCREEN_WIDTH, SCREEN_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        
+        //the location/dimension(s) of the buffered image
+        this.renderLocation = renderLocation;
+    }
+    
+    /**
+     * Create game timer, if we are counting down the time
+     * @param time The time to countdown
+     */
+    public void createTimer(final long time)
+    {
+        this.gameTimer = new Timer(time);
     }
     
     public void createBoard(final int virusCount)
@@ -122,14 +144,14 @@ public class Player extends PlayerInformation implements IElement
     @Override
     public void update(final Engine engine) throws Exception
     {
-        if (playerImage == null)
-            playerImage = new BufferedImage((int)getWidth(), (int)getHeight(), BufferedImage.TYPE_INT_ARGB);
-        
         super.update(engine);
         
         //if the player has lost or won no more updates are required
         if (hasLose() || hasWin())
             return;
+        
+        //update Timer as long as game hasn't ended
+        updateTimer(engine.getMain().getTime());
         
         //check for matches on board etc...
         getBoard().update(engine);
@@ -154,10 +176,9 @@ public class Player extends PlayerInformation implements IElement
         //set the correct virus count
         super.setVirusCount(getBoard().getVirusCount());
         
-        //the entrance is blocked (Game Over)
-        if (getBoard().getBlock(START) != null)
+        //if the entrance is blocked or in timed mode and time ran out
+        if (hasEntranceBlocked() || hasTimePassed())
         {
-            this.lose = true;
             setLose();
             return;
         }
@@ -165,7 +186,6 @@ public class Player extends PlayerInformation implements IElement
         //have we removed all of the viruses
         if (getBoard().getVirusCount() <= 0)
         {
-            this.win = true;
             setWin();
             return;
         }
@@ -192,6 +212,89 @@ public class Player extends PlayerInformation implements IElement
             //apply gravity to the Pill and check the Board for collision
             applyGravity();
         }
+    }
+    
+    @Override
+    public void setLose()
+    {
+        this.lose = true;
+        super.setLose();
+        super.setDisplayGameOver();
+    }
+    
+    @Override
+    public void setWin()
+    {
+        this.win = true;
+        super.setWin();
+    }
+    
+    /**
+     * Are the two Cells where the pill starts already occupied in the Board
+     * @return boolean
+     */
+    private boolean hasEntranceBlocked()
+    {
+        return (getBoard().getBlock(START) != null || getBoard().getBlock(START1) != null);
+    }
+    
+    /**
+     * If playing timed mode and time has run out
+     * @return boolean
+     */
+    private boolean hasTimePassed()
+    {
+        //if we are counting down and the time has passed
+        if (hasCountdown() && gameTimer.hasTimePassed())
+        {
+            gameTimer.setRemaining(0);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    private void updateTimer(final long time)
+    {
+        //update game timer as long as game hasn't ended
+        gameTimer.update(time);
+
+        //are we counting down
+        if (hasCountdown())
+        {
+            //set the time remaining
+            super.setTimeDesc(gameTimer.getDescRemaining("mm:ss"));
+        }
+        else
+        {
+            //set the time passed
+            super.setTimeDesc(gameTimer.getDescPassed("mm:ss"));
+        }
+    }
+    
+    public void resetStatus()
+    {
+        this.lose = false;
+        this.win = false;
+        
+        super.resetLose();
+        super.resetWin();
+        
+        super.resetDisplayGameOver();
+        
+        //create a new random background
+        super.setBackground(random);
+    }
+    
+    /**
+     * Are we in timed mode
+     * @return 
+     */
+    private boolean hasCountdown()
+    {
+        return (gameTimer.getReset() != 0);
     }
     
     /**
@@ -339,7 +442,7 @@ public class Player extends PlayerInformation implements IElement
         return this.next;
     }
     
-    public void createNextPill() throws Exception
+    public void createNextPill()
     {
         this.next = new Pill();
         
@@ -391,7 +494,7 @@ public class Player extends PlayerInformation implements IElement
         this.render();
         
         //draw our buffered image
-        graphics.drawImage(playerImage, (int)getX(), (int)getY(), (int)getWidth(), (int)getHeight(), null);
+        graphics.drawImage(playerImage, renderLocation.x, renderLocation.y, renderLocation.width, renderLocation.height, null);
     }
     
     public void render()
@@ -407,15 +510,18 @@ public class Player extends PlayerInformation implements IElement
             renderBoard(bufferedGraphics);
         }
         
-        //now draw player pill if it exists and we can interact with the board
-        if (getPill() != null && getBoard().canInteract())
-            getPill().render(bufferedGraphics, getImage());
-        
-        //draw next pill in upper right corner
-        if (getNext() != null && !hasDisplayPillThrow())
+        if (!hasWin() && !hasLose())
         {
-            getNext().setPosition(getMarioLocation().x - (Block.WIDTH * 2), getMarioLocation().y - Block.HEIGHT);
-            getNext().render(bufferedGraphics, getImage());
+            //now draw player pill if it exists and we can interact with the board
+            if (getPill() != null && getBoard().canInteract())
+                getPill().render(bufferedGraphics, getImage());
+
+            //draw next pill in upper right corner
+            if (getNext() != null && !hasDisplayPillThrow())
+            {
+                getNext().setPosition(getMarioLocation().x - (Block.WIDTH * 2), getMarioLocation().y - Block.HEIGHT);
+                getNext().render(bufferedGraphics, getImage());
+            }
         }
     }
     

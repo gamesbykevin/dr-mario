@@ -7,7 +7,6 @@ import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -49,7 +48,6 @@ public class PlayerInformation extends Sprite
     //non-repeating animation for mario when game over
     private static final Rectangle MARIO_GAME_OVER_1 = new Rectangle(13, 89, 25, 38);
     private static final Rectangle MARIO_GAME_OVER_2 = new Rectangle(48, 89, 25, 38);
-    private static final Rectangle MARIO_GAME_OVER_3 = new Rectangle(77, 89, 38, 38);
     
     //the dr. mario logo
     private static final Rectangle LOGO = new Rectangle(21, 17, 88, 22);
@@ -64,7 +62,7 @@ public class PlayerInformation extends Sprite
     private static final Rectangle TEXT_HI = new Rectangle(727, 306, 15, 7);
    
     //text to display for the type of player
-    private static final Rectangle TEXT_HUMAN = new Rectangle(645, 266, 23, 7);
+    private static final Rectangle TEXT_HUMAN = new Rectangle(645, 266, 39, 7);
     private static final Rectangle TEXT_CPU = new Rectangle(645, 254, 23, 7);
     
     //# 0 - 9 Text
@@ -78,6 +76,12 @@ public class PlayerInformation extends Sprite
     private static final Rectangle NUMBER_7 = new Rectangle(725, 294, 7, 7);
     private static final Rectangle NUMBER_8 = new Rectangle(734, 294, 7, 7);
     private static final Rectangle NUMBER_9 = new Rectangle(743, 294, 7, 7);
+    
+    //area representing the symbol :
+    private static final Rectangle COLON_TEXT = new Rectangle(751, 294, 6, 7);
+    
+    //area representing the symbol .
+    private static final Rectangle PERIOD_TEXT = new Rectangle(757, 295, 6, 6);
     
     //animation for display virus alive
     private static final Rectangle DISPLAY_VIRUS_BLUE_ALIVE_1 = new Rectangle(301, 47, 24, 21);
@@ -190,7 +194,7 @@ public class PlayerInformation extends Sprite
         DisplayAliveYellow,
         
         MarioPillThrow,
-        MarioGameOver
+        MarioGameOver,
     }
     
     //is the player human
@@ -199,7 +203,7 @@ public class PlayerInformation extends Sprite
     //different available speeds
     public enum SpeedKey
     {
-        Medium, High, Low
+        Low, Medium, High
     }
     
     //speed which pill falls
@@ -220,9 +224,20 @@ public class PlayerInformation extends Sprite
     private Point scoreLocation;
     private Point virusCountLocation;
     private Point levelLocation;
+    private Point timeLocation;
+    
+    //original size of the game
+    protected static final int SCREEN_WIDTH = 256;
+    protected static final int SCREEN_HEIGHT = 224;
+    
+    private String timeDesc = "00:00.0";
     
     public PlayerInformation()
     {
+        //hard set these location/dimension(s)
+        super.setLocation(0, 0);
+        super.setDimensions(SCREEN_WIDTH, SCREEN_HEIGHT);
+        
         //map the animation
         animations = new HashMap<>();
         
@@ -281,24 +296,23 @@ public class PlayerInformation extends Sprite
         ssa = new SpriteSheetAnimation();
         ssa.add(MARIO_GAME_OVER_1, DELAY_GAME_OVER_DISPLAY);
         ssa.add(MARIO_GAME_OVER_2, DELAY_GAME_OVER_DISPLAY);
-        ssa.add(MARIO_GAME_OVER_3, DELAY_GAME_OVER_DISPLAY);
-        ssa.setLoop(false);
+        ssa.setLoop(true);
         animations.put(AnimationKey.MarioGameOver, ssa);
     }
     
-    public void setInformationLocations(final Rectangle container)
+    public void setInformationLocations()
     {
         pillContainerDestination = new Point();
-        pillContainerDestination.x = (int)((container.width / 2) - (PILL_CONTAINER_1.width / 2));
-        pillContainerDestination.y = (int)((container.height * .18));
+        pillContainerDestination.x = (int)((getWidth() / 2) - (PILL_CONTAINER_1.width / 2));
+        pillContainerDestination.y = (int)((getHeight() * .18));
         
         finishLocation = new Point();
-        finishLocation.x = (int)((container.width / 2) - (WIN_NOTIFICATION.width / 2));
-        finishLocation.y = (int)(container.height * .45);
+        finishLocation.x = (int)((getWidth() / 2) - (WIN_NOTIFICATION.width / 2));
+        finishLocation.y = (int)(getHeight() * .45);
 
         magnifyingGlassContainer = new Point();
-        magnifyingGlassContainer.x = (int)(container.width  * .02);
-        magnifyingGlassContainer.y = (int)(container.height * .55);
+        magnifyingGlassContainer.x = (int)(getWidth()  * .02);
+        magnifyingGlassContainer.y = (int)(getHeight() * .55);
         
         displayVirusBlue = new Point();
         displayVirusBlue.x = (int)(magnifyingGlassContainer.x + (VIRUS_CONTAINER.width * .57) - (DISPLAY_VIRUS_BLUE_ALIVE_1.width / 2));
@@ -313,12 +327,12 @@ public class PlayerInformation extends Sprite
         displayVirusYellow.y = (int)(magnifyingGlassContainer.y + (VIRUS_CONTAINER.height * .45));
         
         informationContainer1 = new Point();
-        informationContainer1.x = (int)(container.width  * .05);
-        informationContainer1.y = (int)(container.height * .15);
+        informationContainer1.x = (int)(getWidth()  * .05);
+        informationContainer1.y = (int)(getHeight() * .15);
         
         informationContainer2 = new Point();
-        informationContainer2.x = (int)(container.width  * .68);
-        informationContainer2.y = (int)(container.height * .48);
+        informationContainer2.x = (int)(getWidth()  * .68);
+        informationContainer2.y = (int)(getHeight() * .48);
         
         statusLocation = new Point();
         statusLocation.x = (int)(informationContainer1.x + (INFORMATION_CONTAINER_1.width / 2) - (TEXT_HUMAN.width / 2));
@@ -340,17 +354,30 @@ public class PlayerInformation extends Sprite
         levelLocation.x = (int)(informationContainer2.x + (INFORMATION_CONTAINER_2.width / 2) - (NUMBER_0.width/2));
         levelLocation.y = (int)(informationContainer2.y + (INFORMATION_CONTAINER_2.height * .25));
         
+        timeLocation = new Point();
+        timeLocation.x = (int)(informationContainer1.x + (INFORMATION_CONTAINER_1.width * .25));
+        timeLocation.y = (int)(informationContainer1.y + (INFORMATION_CONTAINER_1.height * .6));
+        
         marioContainer = new Point();
-        marioContainer.x = (int)(container.width  * .7);
-        marioContainer.y = (int)(container.height * .18);
+        marioContainer.x = (int)(getWidth()  * .7);
+        marioContainer.y = (int)(getHeight() * .18);
         
         drMario = new Point();
         drMario.x = (int)(marioContainer.x + (MARIO_CONTAINER.width  * .15));
         drMario.y = (int)(marioContainer.y + (MARIO_CONTAINER.height * .21));
         
         gameLogo = new Point();
-        gameLogo.x = (int)(container.width  * .35);
-        gameLogo.y = (int)(container.height * .03);
+        gameLogo.x = (int)(getWidth()  * .35);
+        gameLogo.y = (int)(getHeight() * .03);
+    }
+    
+    /**
+     * Set the time to be displayed
+     * @param timeDesc 
+     */
+    protected void setTimeDesc(final String timeDesc)
+    {
+        this.timeDesc = timeDesc;
     }
     
     /**
@@ -440,6 +467,16 @@ public class PlayerInformation extends Sprite
         showGameover = false;
     }
     
+    protected void setDisplayGameOver()
+    {
+        displayGameover = true;
+    }
+    
+    protected void resetDisplayGameOver()
+    {
+        displayGameover = false;
+    }
+    
     public void setHuman(final boolean result)
     {
         human = result;
@@ -511,6 +548,7 @@ public class PlayerInformation extends Sprite
                 animations.get(AnimationKey.MarioPillThrow).reset();
             }
         }
+        
         if (displayGameover)
             animations.get(AnimationKey.MarioGameOver).update(engine.getMain().getTime());
     }
@@ -521,7 +559,6 @@ public class PlayerInformation extends Sprite
         {
             case Background1:
                 //draw background
-                //draw(graphics, getImage(), BACKGROUND_1);
                 drawImage(graphics, getImage(), BACKGROUND_1, new Point(0,0));
 
                 //draw pill jar
@@ -530,7 +567,6 @@ public class PlayerInformation extends Sprite
                 
             case Background2:
                 //draw background
-                //draw(graphics, getImage(), BACKGROUND_2);
                 drawImage(graphics, getImage(), BACKGROUND_2, new Point(0,0));
 
                 //draw pill jar
@@ -539,7 +575,6 @@ public class PlayerInformation extends Sprite
                 
             case Background3:
                 //draw background
-                //draw(graphics, getImage(), BACKGROUND_3);
                 drawImage(graphics, getImage(), BACKGROUND_3, new Point(0,0));
 
                 //draw pill jar
@@ -549,7 +584,6 @@ public class PlayerInformation extends Sprite
         
         //draw magnifying glass
         drawImage(graphics, getImage(), VIRUS_CONTAINER, magnifyingGlassContainer);
-        
         
         if (displayBlueVirus)
         {
@@ -647,24 +681,25 @@ public class PlayerInformation extends Sprite
         }
         
         //draw score
-        drawNumber(graphics, getImage(), score, scoreLocation);
+        drawNumberDescription(graphics, getImage(), Integer.toString(score), scoreLocation);
         
         //draw virus count
-        drawNumber(graphics, getImage(), count, virusCountLocation);
+        drawNumberDescription(graphics, getImage(), Integer.toString(count), virusCountLocation);
         
         //draw level number
-        drawNumber(graphics, getImage(), level, levelLocation);
+        drawNumberDescription(graphics, getImage(), Integer.toString(level), levelLocation);
+        
+        //draw timer
+        drawNumberDescription(graphics, getImage(), timeDesc, timeLocation);
     }
     
-    private void drawNumber(final Graphics graphics, final Image image, final int number, Point start)
+    private void drawNumberDescription(final Graphics graphics, final Image image, final String desc, Point start)
     {
-        final String display = Integer.toString(number).trim();
-        
         final Point drawLocation = new Point(start);
         
-        for (int i=0; i < display.length(); i++)
+        for (int i=0; i < desc.trim().length(); i++)
         {
-            Rectangle tmp = getNumberLocation(display.substring(i, i + 1));
+            Rectangle tmp = getTextLocation(desc.trim().substring(i, i + 1));
             
             //draw number
             drawImage(graphics, image, tmp, drawLocation);
@@ -673,7 +708,7 @@ public class PlayerInformation extends Sprite
         }
     }
     
-    private Rectangle getNumberLocation(final String display)
+    private Rectangle getTextLocation(final String display)
     {
         if (display.trim().equals("0"))
             return NUMBER_0;
@@ -695,6 +730,10 @@ public class PlayerInformation extends Sprite
             return NUMBER_8;
         if (display.trim().equals("9"))
             return NUMBER_9;
+        if (display.trim().equals(":"))
+            return COLON_TEXT;
+        if (display.trim().equals("."))
+            return PERIOD_TEXT;
         
         return null;
     }

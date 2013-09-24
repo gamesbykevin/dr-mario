@@ -7,9 +7,7 @@ import com.gamesbykevin.framework.util.*;
 import com.gamesbykevin.drmario.block.*;
 import com.gamesbykevin.drmario.block.Block.*;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.shared.IElement;
 
-import java.awt.Graphics;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
