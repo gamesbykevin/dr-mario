@@ -7,6 +7,7 @@ import com.gamesbykevin.framework.util.*;
 import com.gamesbykevin.drmario.block.*;
 import com.gamesbykevin.drmario.block.Block.*;
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.resource.Resources.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,14 +46,19 @@ public class Board extends Sprite
     //are we done spawning viruses
     private boolean spawnComplete = false;
     
-    //the timer for determining when the death animation is finished
-    private Timer timer;
+    //our timers that will track death duration, and drop pill durtation
+    private TimerCollection timers;
     
     //the time to show the dead blocks animation
     private static final long DEATH_TIME = TimerCollection.toNanoSeconds(500L);
     
     //the time to wait between dropping the Block(s)
-    private static final long DROP_TIME = TimerCollection.toNanoSeconds(250L);
+    private static final long DROP_TIME = TimerCollection.toNanoSeconds(125L);
+    
+    private enum Key
+    {
+        Death, Drop
+    }
     
     //the dimensions for the board
     private static final int COLUMNS = 8;
@@ -60,6 +66,24 @@ public class Board extends Sprite
     
     //our random number generator object
     private final Random random;
+    
+    //the blocks that we will add as the penalty
+    private List<Block> penaltyBlocks;
+    
+    //when we check for a match where we previously dropping so we can determine chain(s)
+    private boolean previousDrop = false;
+    
+    //we will track score here for the current level
+    private int score = 0;
+    
+    //the score to add for a pill kill regardless of a chain or not
+    private static final int SCORE_PILL_KILL = 10;
+    
+    //the score to add for a virus kill
+    private static final int SCORE_VIRUS_KILL = 100;
+    
+    //the score to add for a chained virus kill
+    private static final int SCORE_VIRUS_KILL_CHAIN = 200;
     
     /**
      * Create a new empty board of the specified columns and rows and to be rendered within the screen.
@@ -73,9 +97,6 @@ public class Board extends Sprite
     {
         //create our random number generator object
         this.random = new Random(seed);
-        
-        //create new timer with death time set
-        this.timer = new Timer(DEATH_TIME);
         
         //set the virus count
         this.virusCount = virusCount;
@@ -97,6 +118,9 @@ public class Board extends Sprite
         
         //create an empty List that will contain our dead Block(s)
         this.deadBlocks = new ArrayList<>();
+        
+        //a list of blocks being added to the board as a penalty
+        this.penaltyBlocks = new ArrayList<>();
     }
     
     /**
@@ -127,7 +151,20 @@ public class Board extends Sprite
         locations.clear();
         locations = null;
     
-        timer = null;
+        if (timers != null)
+            timers.dispose();
+        
+        timers = null;
+    }
+    
+    public int getScore()
+    {
+        return this.score;
+    }
+    
+    public void addScore(final int bonus)
+    {
+        this.score += bonus;
     }
     
     /**
@@ -143,16 +180,33 @@ public class Board extends Sprite
      * Are any of the blocks currently dead
      * @return boolean
      */
-    private boolean hasDead()
+    public boolean hasDead()
     {
         return (!deadBlocks.isEmpty());
+    }
+    
+    /**
+     * Count the number of dead viruses
+     * @return int
+     */
+    public int getDeadVirusCount()
+    {
+        int count = 0;
+        
+        for (Block block : deadBlocks)
+        {
+            if (Virus.isVirus(block))
+                count++;
+        }
+        
+        return count;
     }
     
     /**
      * Are we in the middle of dropping any single existing blocks
      * @return 
      */
-    private boolean hasDrop()
+    public boolean hasDrop()
     {
         return this.drop;
     }
@@ -186,6 +240,13 @@ public class Board extends Sprite
      */
     public void update(final Engine engine) throws Exception
     {
+        if (this.timers == null)
+        {
+            this.timers = new TimerCollection(engine.getMain().getTime());
+            this.timers.add(Key.Death, DEATH_TIME);
+            this.timers.add(Key.Drop, DROP_TIME);
+        }
+        
         //if we haven't reached our goal and there are still spawn locations
         if (!isSpawnComplete())
         {
@@ -200,33 +261,30 @@ public class Board extends Sprite
             //if blocks are dead wait until animation has finished
             if (hasDead())
             {
-                //update timer
-                timer.update(engine.getMain().getTime());
+                timers.update();
                 
                 //if the time has passed
-                if (timer.hasTimePassed())
+                if (timers.hasTimePassed(Key.Death))
                 {
                     //reset timer
-                    timer.reset();
+                    timers.reset();
                     
                     //remove any existing dead pieces
                     removeDead();
                     
                     //now that the dead pieces have been removed we need to drop the extra Block(s)
                     this.drop = true;
-                    
-                    //set the timer for the drop time
-                    timer.setReset(DROP_TIME);
-                    timer.reset();
                 }
             }
             else
             {
-                
                 if (hasDrop())
                 {
+                    //we are dropping so set flag
+                    previousDrop = true;
+                    
                     //update timer
-                    timer.update(engine.getMain().getTime());
+                    timers.update();
                     
                     checkDrop();
                 }
@@ -236,21 +294,63 @@ public class Board extends Sprite
                     List<Block> deadBlocksTmp = getMatches();
 
                     //were any dead Block(s) found
-                    if (deadBlocksTmp.size() > 0)
+                    if (!deadBlocksTmp.isEmpty())
                     {
-                        //set the time limit to the death time and reset the timer
-                        this.timer.setReset(DEATH_TIME);
-                        this.timer.reset();
+                        //reset timers again
+                        this.timers.reset();
 
+                        //the number of viruses destroyed
+                        int countV = 0;
+                        
+                        //the number of pills destroyed
+                        int countP  = 0;
+                        
                         //mark all found as dead
                         for (Block tmpBlock : deadBlocksTmp)
                         {
+                            if (Virus.isVirus(tmpBlock))
+                            {
+                                //count the total number of viruses
+                                countV++;
+                            }
+                            else
+                            {
+                                //count the total number of pills
+                                countP++;
+                            }
+                            
                             //mark the Block as dead
                             getBlock(tmpBlock).setDead(true);
 
                             //now add it to the official dead List
                             deadBlocks.add(getBlock(tmpBlock));
                         }
+                        
+                        //add pill score
+                        addScore((countP * SCORE_PILL_KILL));
+                        
+                        //if we were previously dropping this is part of a chain
+                        if (previousDrop)
+                        {
+                            //add chained virus kill score 
+                            addScore((countV * SCORE_VIRUS_KILL_CHAIN));
+                            
+                            //play chain sound effect
+                            engine.getResources().playGameAudio(GameAudio.Chain, false);
+                        }
+                        else
+                        {
+                            //add virus kill score
+                            addScore((countV * SCORE_VIRUS_KILL));
+                            
+                            //play match sound effect
+                            engine.getResources().playGameAudio(GameAudio.Match, false);
+                        }
+                    }
+                    else
+                    {
+                        //no match was found so set flag back to false
+                        previousDrop = false;
                     }
                 }
             }
@@ -273,119 +373,256 @@ public class Board extends Sprite
     }
     
     /**
+     * If there are penalty blocks add them to the board and return true, otherwise return false
+     * @return boolean
+     */
+    public boolean applyPenalty()
+    {
+        //if there are penalty blocks add them
+        if (!penaltyBlocks.isEmpty())
+        {
+            //add the penalty blocks to the board
+            for (Block block : penaltyBlocks)
+            {
+                //make sure block is in the first row
+                block.setRow(0);
+
+                //set the correct x, y position
+                block.setPosition(getX(), getY());
+
+                //add block to board
+                setBlock(block.getCol(), block.getRow(), new Block(block));
+            }
+
+            //clear list
+            penaltyBlocks.clear();
+
+            //drop will remain true to drop new pieces
+            drop = true;
+            
+            //penalty has been applied return true;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    
+    /**
+     * When we penalize we add pills to columns that contain viruses.<br><br>
+     * Not every virus will be covered
+     */
+    public void penalize()
+    {
+        //we don't want to stack up too many blocks too fast
+        if (!penaltyBlocks.isEmpty())
+            return;
+        
+        //the number of penalty blocks we will be adding
+        final int limit = (getCols() / 2);
+        
+        List<Integer> columns = new ArrayList<>();
+        
+        for (int i=0; i < getCols(); i++)
+        {
+            columns.add(i);
+        }
+        
+        //the total number of penalty blocks will be half the total number of columns
+        while(penaltyBlocks.size() < limit && !columns.isEmpty())
+        {
+            //random index
+            final int index = random.nextInt(columns.size());
+            
+            //get column
+            final int col = columns.get(index);
+            
+            //penalty block
+            Block tmp = new Block();
+
+            //set the column to the random one chosen
+            tmp.setCol(col);
+            
+            //get the first virus found in the specific column
+            final Block block = getBlockBelow(col);
+            
+            //if the block exists then pick a non-matching color
+            if (block != null)
+            {
+                if (block.hasMatch(Type.RedPill))
+                    tmp.setType((random.nextInt(2) == 1) ? Type.BluePill : Type.YellowPill);
+                if (block.hasMatch(Type.BluePill))
+                    tmp.setType((random.nextInt(2) == 1) ? Type.YellowPill : Type.RedPill);
+                if (block.hasMatch(Type.YellowPill))
+                    tmp.setType((random.nextInt(2) == 1) ? Type.BluePill : Type.RedPill);
+            }
+            else
+            {
+                //set random type
+                final int result = random.nextInt(3);
+                
+                switch(result)
+                {
+                    case 0:
+                        tmp.setType(Type.RedPill);
+                        break;
+                        
+                    case 1:
+                        tmp.setType(Type.BluePill);
+                        break;
+                        
+                    case 2:
+                        tmp.setType(Type.YellowPill);
+                        break;
+                }
+            }
+            
+            //remove selection from list so we don't choose it again
+            columns.remove(index);
+            
+            //add block to penalty list
+            this.penaltyBlocks.add(tmp);
+        }
+    }
+    
+    /**
+     * Start at the first row 0 and move south until we find a Block
+     * If no Block is found null is returned.
+     * 
+     * @param col The column
+     * @param board The board to check
+     * @return Block if there is no Block below null will be returned
+     */
+    public Block getBlockBelow(final int col)
+    {
+        //start at the top and continue moving south
+        for (int row = 0; row < getRows(); row++)
+        {
+            //if the Block exists return it
+            if (getBlock(col, row) != null)
+                return getBlock(col, row);
+        }
+        
+        //no Block was found so return null
+        return null;
+    }
+    
+    /**
      * Apply gravity to any separate hanging Block(s)
      */
     private void checkDrop()
     {
+        //not enough time has passed yet for the next drop
+        if (!timers.hasTimePassed(Key.Drop))
+            return;
+        
         //time has passed to make the next drop
-        if (timer.hasTimePassed())
-        {
-            timer.reset();
-            
-            //are we finished dropping Block(s)
-            boolean finish = true;
-            
-            //start on the second to last row and go backwards
-            for (int row = getRows() - 2; row >= 0; row--)
-            {
-                for (int col=0; col < getCols(); col++)
-                {
-                    final Block tmp = getBlock(col, row);
-                    
-                    //if the block does not exist no need to check or if it is already dead
-                    if (tmp == null)
-                        continue;
-                    
-                    //we are only dropping pills so skip if other
-                    if (!Pill.isPill(tmp))
-                        continue;
-                    
-                    //if the Block below is a virus we can't drop because the viruses don't drop
-                    if (getBlock(col, row + 1) != null && Virus.isVirus(getBlock(col, row + 1)))
-                        continue;
-                    
-                    // the block below the current does not exist so we will need to check if it needs to be dropped
-                    if (getBlock(col, row + 1) == null)
-                    {
-                        //get the Block to the west and east
-                        final Block west = getBlock(col - 1, row);
-                        final Block east = getBlock(col + 1, row);
+        timers.reset();
 
-                        //if there is no connecting piece to the east or west it will be dropped
-                        if (west == null && east == null)
+        //are we finished dropping Block(s)
+        boolean finish = true;
+
+        //start on the second to last row and go backwards
+        for (int row = getRows() - 2; row >= 0; row--)
+        {
+            for (int col=0; col < getCols(); col++)
+            {
+                final Block tmp = getBlock(col, row);
+
+                //if the block does not exist no need to check or if it is already dead
+                if (tmp == null)
+                    continue;
+
+                //we are only dropping pills so skip if other
+                if (!Pill.isPill(tmp))
+                    continue;
+
+                //if the Block below is a virus we can't drop because the viruses don't drop
+                if (getBlock(col, row + 1) != null && Virus.isVirus(getBlock(col, row + 1)))
+                    continue;
+
+                // the block below the current does not exist so we will need to check if it needs to be dropped
+                if (getBlock(col, row + 1) == null)
+                {
+                    //get the Block to the west and east
+                    final Block west = getBlock(col - 1, row);
+                    final Block east = getBlock(col + 1, row);
+
+                    //if there is no connecting piece to the east or west it will be dropped
+                    if (west == null && east == null)
+                    {
+                        //apply Gravity to specific Block
+                        applyGravity(col, row, tmp);
+
+                        //we have altered a Block so we are not finished
+                        finish = false;
+                    }
+                    else
+                    {
+                        boolean westMember = false;
+                        boolean eastMember = false;
+
+                        //if a west Block exists
+                        if (west != null)
+                        {
+                            //is the west Block part of the current Block
+                            westMember = (west.getGroup() == tmp.getGroup());
+
+                            //is the west Block part of the current Block
+                            if (westMember)
+                            {
+                                //the west Block does not have anchor below it
+                                if (getBlock(west.getCol(), west.getRow() + 1) == null)
+                                {
+                                    //apply Gravity to specific Block
+                                    applyGravity(col, row, tmp);
+
+                                    //we have altered a Block so we are not finished
+                                    finish = false;
+                                }
+                            }
+                        }
+
+                        //if an east Block exists
+                        if (east != null)
+                        {
+                            //is the east Block part of the current Block
+                            eastMember = (east.getGroup() == tmp.getGroup());
+
+                            //is the east Block part of the current Block
+                            if (eastMember)
+                            {
+                                //the east Block does not have anchor below it
+                                if (getBlock(east.getCol(), east.getRow() + 1) == null)
+                                {
+                                    //apply Gravity to specific Block
+                                    applyGravity(col, row, tmp);
+
+                                    //we have altered a Block so we are not finished
+                                    finish = false;
+                                }
+                            }
+                        }
+
+                        //if the neighbors exist but are not part of the same group we can drop
+                        if (!westMember && !eastMember)
                         {
                             //apply Gravity to specific Block
                             applyGravity(col, row, tmp);
-                            
+
                             //we have altered a Block so we are not finished
                             finish = false;
-                        }
-                        else
-                        {
-                            boolean westMember = false;
-                            boolean eastMember = false;
-                            
-                            //if a west Block exists
-                            if (west != null)
-                            {
-                                //is the west Block part of the current Block
-                                westMember = (west.getGroup() == tmp.getGroup());
-                                
-                                //is the west Block part of the current Block
-                                if (westMember)
-                                {
-                                    //the west Block does not have anchor below it
-                                    if (getBlock(west.getCol(), west.getRow() + 1) == null)
-                                    {
-                                        //apply Gravity to specific Block
-                                        applyGravity(col, row, tmp);
-
-                                        //we have altered a Block so we are not finished
-                                        finish = false;
-                                    }
-                                }
-                            }
-                            
-                            //if an east Block exists
-                            if (east != null)
-                            {
-                                //is the east Block part of the current Block
-                                eastMember = (east.getGroup() == tmp.getGroup());
-                                
-                                //is the east Block part of the current Block
-                                if (eastMember)
-                                {
-                                    //the east Block does not have anchor below it
-                                    if (getBlock(east.getCol(), east.getRow() + 1) == null)
-                                    {
-                                        //apply Gravity to specific Block
-                                        applyGravity(col, row, tmp);
-
-                                        //we have altered a Block so we are not finished
-                                        finish = false;
-                                    }
-                                }
-                            }
-                            
-                            //if the neighbors exist but are not part of the same group we can drop
-                            if (!westMember && !eastMember)
-                            {
-                                //apply Gravity to specific Block
-                                applyGravity(col, row, tmp);
-
-                                //we have altered a Block so we are not finished
-                                finish = false;
-                            }
                         }
                     }
                 }
             }
-            
-            //if no changes were made, stop checking the drop
-            if (finish)
-            {
-                drop = false;
-            }
+        }
+
+        //if no changes were made, stop checking the drop
+        if (finish)
+        {
+            drop = false;
         }
     }
     

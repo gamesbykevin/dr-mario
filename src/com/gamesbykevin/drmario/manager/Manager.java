@@ -10,6 +10,7 @@ import com.gamesbykevin.drmario.player.Agent;
 import com.gamesbykevin.drmario.player.Human;
 import com.gamesbykevin.drmario.player.Player;
 import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
+import com.gamesbykevin.drmario.resource.Resources.GameMusic;
 import com.gamesbykevin.drmario.resource.Resources.GameImage;
 import com.gamesbykevin.framework.util.TimerCollection;
 
@@ -45,17 +46,34 @@ public final class Manager implements Disposable
     
     //different game modes
     private static final int MODE_REGULAR = 0;
+    //have to complete levels within the limited amount of time
     private static final int MODE_TIMED = 1;
+    //play against the cpu and first to eliminate all viruses wins
     private static final int MODE_REGULAR_VS = 2;
+    //play against the cpu and first to eliminate all viruses wins, with penalties every time a virus is destroyed
     private static final int MODE_ATTACK_VS = 3;
     
+    //the mode the user has chosen
     private final int modeIndex;
     
     //the amount of time to add for each virus in Timed mode, currently 20 seconds
     private static final long TIMED_DELAY = TimerCollection.toNanoSeconds(20000L);
     
+    //different music selections
+    private static final int MUSIC_FEVER = 0;
+    private static final int MUSIC_CHILL = 1;
+    private static final int MUSIC_NONE = 2;
+    
+    //the music selection we chose
+    private final int musicSelection;
+    
+    //have we started to play the music
+    private boolean musicStarted = false;
+    
     public Manager(final Engine engine) throws Exception
     {
+        this.musicSelection = engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Music);
+        
         //get the speed selected from the menu
         final SpeedKey speedKey = SpeedKey.values()[engine.getMenu().getOptionSelectionIndex(LayerKey.Options, OptionKey.Speed)];
         
@@ -157,12 +175,10 @@ public final class Manager implements Disposable
     }
     
     /**
-     * All of the setup required for each Player
+     * All of the initial setup required for each Player
      * @param player Object that needs to be setup
      * @param speed Difficulty
-     * @param container Game area
      * @param image Sprite Sheet
-     * @throws Exception 
      */
     private void initialize(final Player player, final SpeedKey speed, final Image image)
     {
@@ -191,6 +207,9 @@ public final class Manager implements Disposable
         //create new board
         player.createBoard(virusCount);
         
+        //create new pill
+        player.createPill();
+        
         //create next pill
         player.createNextPill();
         
@@ -209,11 +228,21 @@ public final class Manager implements Disposable
      */
     private void setNextLevel()
     {
+        //we have not started the music yet
+        musicStarted = false;
+        
         //move to the next level
         this.level++;
         
         if (human != null)
         {
+            //retain total score from level to level
+            if (human.getBoard() != null)
+            {
+                //every time we start a new level add the previous board score to the player total
+                human.setScore(human.getScore() + human.getBoard().getScore());
+            }
+            
             setNextLevel(human);
         }
         
@@ -261,6 +290,23 @@ public final class Manager implements Disposable
      */
     public void update(final Engine engine) throws Exception
     {
+        if (!musicStarted)
+        {
+            //stop all existing sound
+            engine.getResources().stopAllSound();
+            
+            if (musicSelection == MUSIC_FEVER)
+                engine.getResources().playGameMusic(GameMusic.Fever, true);
+            
+            if (musicSelection == MUSIC_CHILL)
+                engine.getResources().playGameMusic(GameMusic.Chill, true);
+            
+            musicStarted = true;
+        }
+        
+        //has the level/game ended
+        boolean statusChange = (human.hasWin() || human.hasLose());
+        
         if (human != null)
         {
             //check for keyboard input etc..
@@ -292,8 +338,66 @@ public final class Manager implements Disposable
             }
         }
         
+        //if playing attack mode we need to see if any players need to be penalized
+        if (modeIndex == MODE_ATTACK_VS)
+            checkPenalty();
+        
         //check if one of the players won
         locateWinner();
+        
+        //if we haven't won or lost previously but we have now play the correct music
+        if (!statusChange && (human.hasWin() || human.hasLose()))
+        {
+            //stop all existing sound
+            engine.getResources().stopAllSound();
+            
+            if (human.hasWin())
+            {
+                engine.getResources().playGameMusic(GameMusic.Win, true);
+            }
+            else
+            {
+                engine.getResources().playGameMusic(GameMusic.Lose, true);
+            }
+        }
+    }
+    
+    /**
+     * Check if 1 player has a virus kill and if so penalize all other players
+     */
+    private void checkPenalty()
+    {
+        //does any of the players have killed a virus
+        boolean hasKill = false;
+        
+        if (human != null)
+        {
+            hasKill = human.hasKill();
+        }
+        
+        //if the human did not have a kill check the ai opponents
+        if (!hasKill)
+        {
+            for (Agent agent : agents)
+            {
+                hasKill = agent.hasKill();
+                
+                //if we have a kill no need to check the others
+                if (hasKill)
+                    break;
+            }
+        }
+        
+        //if somebody has a kill add penalty, player(s) that have a kill will not be penalized
+        if (hasKill)
+        {
+            human.penalize();
+            
+            for (Agent agent : agents)
+            {
+                agent.penalize();
+            }
+        }
     }
     
     /**
@@ -347,8 +451,28 @@ public final class Manager implements Disposable
                     //set every agent to win
                     for (Agent agent : agents)
                     {
-                        agent.setWin();
+                        //set any agent that hasn't lost to win
+                        if (!agent.hasLose())
+                            agent.setWin();
                     }
+                }
+                
+                boolean hasLose = true;
+                
+                //if all opponents lost declare human the winner
+                for (Agent agent : agents)
+                {
+                    if (!agent.hasLose())
+                    {
+                        hasLose = false;
+                        break;
+                    }
+                }
+                
+                //all opponents lost so human has won
+                if (hasLose)
+                {
+                    human.setWin();
                 }
             }
         }

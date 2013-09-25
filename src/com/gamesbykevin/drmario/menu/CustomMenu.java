@@ -29,7 +29,7 @@ public class CustomMenu extends Menu
     { 
         Sound, FullScreen, StartGame, Options, Controls, Instructions, Credits, GoBack, Resume, 
         NewGame, ExitGame, NewGameConfim, NewGameDeny, ExitGameConfirm, ExitGameDeny, 
-        Level, Speed, Mode, OpponentTotal 
+        Level, Speed, Mode, OpponentTotal, Music 
     } 
     
     //unique key to indentify each Layer
@@ -50,7 +50,7 @@ public class CustomMenu extends Menu
     }
     
     //is sound enabled
-    private Toggle sound = Toggle.Off;
+    private Toggle sound = Toggle.On;
     
     //is full screen enabled
     private Toggle fullWindow = Toggle.Off;
@@ -127,18 +127,23 @@ public class CustomMenu extends Menu
                 engine.getResources().stopAllSound();
             }
             
-            //if the values are not equal to each other a change was made
-            if (tmpSound != sound)
+            //set all audio collections sound enabled on/off
+            engine.getResources().setAudioEnabled(Toggle.On == tmpSound);
+                
+            //make sure this Option in all of the Layer(s) have the same value
+            setOptionSelectionIndex(OptionKey.Sound, (tmpSound == Toggle.Off) ? 0 : 1);
+                
+            //if the sound is off make sure all sounds stop
+            if (Toggle.Off == tmpSound)
             {
-                //set all audio collections sound enabled on/off
-                engine.getResources().setAudioEnabled(Toggle.On == tmpSound);
+                //stop all sound
+                engine.getResources().stopAllSound();
                 
-                //make sure this Option in all of the Layer(s) have the same value
-                //setOptionSelectionIndex(OptionKey.Sound, );
-                
-                //set the sound setting same as our temporary
-                this.sound = tmpSound;
+                //disable all audio
+                engine.getResources().setAudioEnabled(false);
             }
+            
+            this.sound = tmpSound;
             
             //if the values are not equal to each other a change was made
             if (tmpFullWindow != fullWindow)

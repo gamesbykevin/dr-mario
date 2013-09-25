@@ -33,9 +33,11 @@ public class PlayerInformation extends Sprite
     
     //screen that says stage clear
     private static final Rectangle WIN_NOTIFICATION = new Rectangle(279, 217, 60, 68);
+    private static final Rectangle WIN_NOTIFICATION_CPU = new Rectangle(279, 217, 60, 25);
     
     //screen that says game over
     private static final Rectangle LOSE_NOTIFICATION = new Rectangle(279, 289, 60, 52);
+    private static final Rectangle LOSE_NOTIFICATION_CPU = new Rectangle(279, 289, 60, 25);
     
     //container for dr. mario animation
     private static final Rectangle MARIO_CONTAINER = new Rectangle(125, 57, 56, 56);
@@ -339,7 +341,7 @@ public class PlayerInformation extends Sprite
         statusLocation.y = (int)(informationContainer1.y + (INFORMATION_CONTAINER_1.height * .8));
         
         scoreLocation = new Point();
-        scoreLocation.x = (int)(informationContainer1.x + (INFORMATION_CONTAINER_1.width * .21));
+        scoreLocation.x = (int)(informationContainer1.x + (INFORMATION_CONTAINER_1.width * .15));
         scoreLocation.y = (int)(informationContainer1.y + (INFORMATION_CONTAINER_1.height * .3));
         
         speedLocation = new Point();
@@ -651,10 +653,28 @@ public class PlayerInformation extends Sprite
         }
         
         if (showGameover)
-            drawImage(graphics, getImage(), LOSE_NOTIFICATION, finishLocation);
+        {
+            if (human)
+            {
+                drawImage(graphics, getImage(), LOSE_NOTIFICATION, finishLocation);
+            }
+            else
+            {
+                drawImage(graphics, getImage(), LOSE_NOTIFICATION_CPU, finishLocation);
+            }
+        }
         
         if (showSuccess)
-            drawImage(graphics, getImage(), WIN_NOTIFICATION, finishLocation);
+        {
+            if (human)
+            {
+                drawImage(graphics, getImage(), WIN_NOTIFICATION, finishLocation);
+            }
+            else
+            {
+                drawImage(graphics, getImage(), WIN_NOTIFICATION_CPU, finishLocation);
+            }
+        }
         
         if (human)
         {

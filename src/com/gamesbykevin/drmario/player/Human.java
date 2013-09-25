@@ -3,6 +3,7 @@ package com.gamesbykevin.drmario.player;
 import com.gamesbykevin.drmario.shared.IElement;
 
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.resource.Resources;
 import java.awt.Rectangle;
 
 import java.awt.event.KeyEvent;
@@ -42,14 +43,27 @@ public final class Human extends Player implements IElement
         if (getPill() == null)
             return;
         
+        if (engine.getKeyboard().hasKeyReleased(KeyEvent.VK_DOWN))
+        {
+            //remove key pressed from List
+            engine.getKeyboard().removeKeyPressed(KeyEvent.VK_DOWN);
+            
+            //remove key released from List
+            engine.getKeyboard().removeKeyReleased(KeyEvent.VK_DOWN);
+        }
+        
         //if time has passed the blocks need to drop or if the user is forcing the piece to drop
         if (engine.getKeyboard().hasKeyPressed(KeyEvent.VK_DOWN))
         {
-            //remove key released from List
+            //remove key pressed from List
             engine.getKeyboard().removeKeyPressed(KeyEvent.VK_DOWN);
 
             //apply gravity to pill
-            applyGravity();
+            final boolean result = applyGravity();
+            
+            //if block(s) were placed play sound effect
+            if (result)
+                engine.getResources().playGameAudio(Resources.GameAudio.Stack, false);
         }
         
         //the user wants to rotate the pieces
@@ -66,6 +80,11 @@ public final class Human extends Player implements IElement
                 //reset the location because of collision
                 getPill().rewind();
             }
+            else
+            {
+                //play sound effect
+                engine.getResources().playGameAudio(Resources.GameAudio.Rotate, false);
+            }
         }
         
         //move piece to the left
@@ -80,6 +99,11 @@ public final class Human extends Player implements IElement
                 //move the pill back
                 getPill().increaseCol();
             }
+            else
+            {
+                //play sound effect
+                //engine.getResources().getGameAudio(Resources.GameAudio.Move).play();
+            }
             
             engine.getKeyboard().removeKeyPressed(KeyEvent.VK_LEFT);
         }
@@ -93,8 +117,13 @@ public final class Human extends Player implements IElement
             //now that the blocked moved check for collision
             if (getBoard().hasCollision(getPill()))
             {
-                getPill().decreaseCol();
                 //move the blocks back;
+                getPill().decreaseCol();
+            }
+            else
+            {
+                //play sound effect
+                //engine.getResources().getGameAudio(Resources.GameAudio.Move).play();
             }
             
             engine.getKeyboard().removeKeyPressed(KeyEvent.VK_RIGHT);

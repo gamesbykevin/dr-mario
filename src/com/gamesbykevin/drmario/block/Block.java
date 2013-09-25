@@ -1,11 +1,14 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Sprite;
+import com.gamesbykevin.framework.base.SpriteSheetAnimation;
 import com.gamesbykevin.framework.resources.Disposable;
+import com.gamesbykevin.framework.util.TimerCollection;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Rectangle;
 
 /**
  * The block will represent one part of the pill used in the original game
@@ -44,7 +47,29 @@ public class Block extends Sprite implements Disposable
     public static final int WIDTH = 9;
     public static final int HEIGHT = 9;
     
-    public Block(final Block block) throws Exception
+    //our pill locations on the sprite sheet
+    private static final Rectangle PILL_YELLOW = new Rectangle(70, 136, 9, 9);
+    private static final Rectangle PILL_RED    = new Rectangle(70, 158, 9, 9);
+    private static final Rectangle PILL_BLUE   = new Rectangle(70, 147, 9, 9);
+    
+    //animation for board virus
+    private static final Rectangle BOARD_VIRUS_BLUE_1 = new Rectangle(84, 138, 9, 9);
+    private static final Rectangle BOARD_VIRUS_BLUE_2 = new Rectangle(95, 139, 9, 8);
+    
+    //animation for board virus
+    private static final Rectangle BOARD_VIRUS_YELLOW_1 = new Rectangle(84, 149, 9, 9);
+    private static final Rectangle BOARD_VIRUS_YELLOW_2 = new Rectangle(95, 149, 9, 9);
+    
+    //animation for board virus
+    private static final Rectangle BOARD_VIRUS_RED_1 = new Rectangle(84, 160, 9, 9);
+    private static final Rectangle BOARD_VIRUS_RED_2 = new Rectangle(95, 160, 9, 9);
+    
+    //time delay for each frame in the animation
+    private static final long BLUE_DELAY = TimerCollection.toNanoSeconds(333L);
+    private static final long YELLOW_DELAY = TimerCollection.toNanoSeconds(150L);
+    private static final long RED_DELAY = TimerCollection.toNanoSeconds(250L);
+    
+    public Block(final Block block)
     {
         //call parent constructor so all properties are copied from object
         super(block);
@@ -57,11 +82,59 @@ public class Block extends Sprite implements Disposable
         
         //is the block dead
         setDead(block.isDead());
+        
+        //setup animation for this block
+        setup(this);
     }
     
     public Block()
     {
         
+    }
+    
+    public void setup(final Block block)
+    {
+        //create sprite sheet
+        block.createSpriteSheet();
+        
+        //object we will use for our sprite sheet animation
+        SpriteSheetAnimation animation = new SpriteSheetAnimation();
+        
+        switch(block.getType())
+        {
+            case BluePill:
+                animation.add(PILL_BLUE,   TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case YellowPill:
+                animation.add(PILL_YELLOW, TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case RedPill:
+                animation.add(PILL_RED,    TimerCollection.toNanoSeconds(250L));
+                break;
+                
+            case BlueVirus:
+                animation.add(BOARD_VIRUS_BLUE_1, BLUE_DELAY);
+                animation.add(BOARD_VIRUS_BLUE_2, BLUE_DELAY);
+                break;
+                
+            case YellowVirus:
+                animation.add(BOARD_VIRUS_YELLOW_1, YELLOW_DELAY);
+                animation.add(BOARD_VIRUS_YELLOW_2, YELLOW_DELAY);
+                break;
+                
+            case RedVirus:
+                animation.add(BOARD_VIRUS_RED_1, RED_DELAY);
+                animation.add(BOARD_VIRUS_RED_2, RED_DELAY);
+                break;
+        }
+        
+        //no loop because they are all single frame
+        animation.setLoop(true);
+        block.getSpriteSheet().add(animation, AnimationKey.Alive);
+        block.getSpriteSheet().setCurrent(AnimationKey.Alive);
+        block.setDimensions();
     }
     
     /**

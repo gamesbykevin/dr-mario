@@ -7,6 +7,7 @@ import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.engine.Engine;
 import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.Resources.MenuMusic;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 import com.gamesbykevin.drmario.shared.Shared;
 
@@ -21,7 +22,7 @@ public class MainTitle extends Layer implements LayerRules
         setForce(false);
         setPause(true);
         setTimer(new Timer(TimerCollection.toNanoSeconds(5000L)));
-        
+        setSound(engine.getResources().getMenuMusic(MenuMusic.Title));
         setup(engine);
     }
     

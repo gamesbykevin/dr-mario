@@ -6,6 +6,7 @@ import com.gamesbykevin.drmario.block.Pill;
 import com.gamesbykevin.drmario.block.Pill.Rotation;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
+import com.gamesbykevin.drmario.resource.Resources.*;
 import com.gamesbykevin.drmario.shared.IElement;
 
 import com.gamesbykevin.framework.base.Cell;
@@ -66,6 +67,12 @@ public class Player extends PlayerInformation implements IElement
     
     //where the buffered image will be drawn and the dimensions as well
     private final Rectangle renderLocation;
+    
+    //if we have destroyed a virus kill will be true
+    private boolean kill = false;
+    
+    //the players overall score;
+    private int score;
     
     /**
      * Create a new timer with the specified delay that will determine the duration
@@ -153,8 +160,18 @@ public class Player extends PlayerInformation implements IElement
         //update Timer as long as game hasn't ended
         updateTimer(engine.getMain().getTime());
         
+        //are there dead blocks on the board
+        boolean hasDead = getBoard().hasDead();
+        
         //check for matches on board etc...
         getBoard().update(engine);
+        
+        //if there were no dead blocks before update and now there is and there are viruses among the dead
+        if (!hasDead && getBoard().hasDead() && getBoard().getDeadVirusCount() > 0)
+        {
+            //set flag that we have killed a virus
+            kill = true;
+        }
         
         //check here if any viruses hurt so can change the display virus in PlayerInformation
         if (getBoard().hasDeadType(Type.BlueVirus))
@@ -176,12 +193,8 @@ public class Player extends PlayerInformation implements IElement
         //set the correct virus count
         super.setVirusCount(getBoard().getVirusCount());
         
-        //if the entrance is blocked or in timed mode and time ran out
-        if (hasEntranceBlocked() || hasTimePassed())
-        {
-            setLose();
-            return;
-        }
+        //set the score to the player total score + the current board score
+        super.setScore(getScore() + getBoard().getScore());
         
         //have we removed all of the viruses
         if (getBoard().getVirusCount() <= 0)
@@ -193,14 +206,25 @@ public class Player extends PlayerInformation implements IElement
         //if our pill has not been created yet 
         if (getPill() == null)
         {
-            //take the next Pill and assign as current
-            createPill();
-            
-            //create a new Pill for the future
-            createNextPill();
-            
-            //reset pill throw animation
-            resetPillThrow();
+            //make sure penalty wasn't applied before creating a new pill
+            if (!getBoard().applyPenalty())
+            {
+                //take the next Pill and assign as current
+                createPill();
+
+                //create a new Pill for the future
+                createNextPill();
+
+                //reset pill throw animation
+                resetPillThrow();
+                
+                //reset the timer
+                getTimer().reset();
+            }
+            else
+            {
+                //penalty has been applied
+            }
         }
         
         //update timer
@@ -209,8 +233,56 @@ public class Player extends PlayerInformation implements IElement
         //has time passed
         if (getTimer().hasTimePassed())
         {
+            //if the entrance is blocked or in timed mode and time ran out
+            if (hasEntranceBlocked() || hasTimePassed())
+            {
+                setLose();
+                return;
+            }
+            
             //apply gravity to the Pill and check the Board for collision
-            applyGravity();
+            final boolean result = applyGravity();
+            
+            //if block(s) were placed play sound effect
+            if (result)
+                engine.getResources().playGameAudio(GameAudio.Stack, false);
+        }
+    }
+    
+    public int getScore()
+    {
+        return this.score;
+    }
+    
+    @Override
+    public void setScore(final int score)
+    {
+        this.score = score;
+    }
+    
+    /**
+     * Did the player kill a virus
+     * @return boolean
+     */
+    public boolean hasKill()
+    {
+        return this.kill;
+    }
+    
+    /**
+     * Add penalty to player if they don't have a kill
+     */
+    public void penalize()
+    {
+        //if this player does not have a kill they will be penalized
+        if (!kill)
+        {
+            getBoard().penalize();
+        }
+        else
+        {
+            //since we have a kill we won't be penalized, but also set kill = false
+            kill = false;
         }
     }
     
@@ -235,7 +307,19 @@ public class Player extends PlayerInformation implements IElement
      */
     private boolean hasEntranceBlocked()
     {
-        return (getBoard().getBlock(START) != null || getBoard().getBlock(START1) != null);
+        //iif pills are dropping we can't check yet
+        if (getBoard().hasDrop())
+            return false;
+        
+        //if the entrance is blocked and the block below is occupied
+        if (getBoard().getBlock(START) != null && getBoard().getBlock(START.getCol(), START.getRow() + 1) != null)
+            return true;
+        
+        //if the entrance is blocked and the block below is occupied
+        if (getBoard().getBlock(START1) != null && getBoard().getBlock(START1.getCol(), START1.getRow() + 1) != null)
+            return true;
+        
+        return false;
     }
     
     /**
@@ -355,38 +439,50 @@ public class Player extends PlayerInformation implements IElement
      * In addition since gravity is applied we reset the gravity timer as well
      * 
      * @param board The board we are using to check for collision
+     * @return boolean True if the Pill was placed on the board, false otherwise
      */
-    protected void applyGravity() throws Exception
+    protected boolean applyGravity() throws Exception
     {
-        //move the pill down 1 row
-        getPill().increaseRow();
-
-        //now that the pill moved check for collision
-        if (getBoard().hasCollision(getPill()))
+        if (getPill() != null)
         {
-            //move the pill back
-            getPill().decreaseRow();
+            //move the pill down 1 row
+            getPill().increaseRow();
 
-            if (getPill().getRow() < 0 || getPill().getExtra().getRow() < 0)
+            //now that the pill moved check for collision
+            if (getBoard().hasCollision(getPill()))
             {
-                this.lose = true;
-                return;
-            }
-            else
-            {
-                //place Pill on board
-                getBoard().addPill(getPill());
+                //move the pill back
+                getPill().decreaseRow();
 
-                //now that Pill has been placed remove it
-                removePill();
+                if (getPill().getRow() < 0 || getPill().getExtra().getRow() < 0)
+                {
+                    this.lose = true;
 
-                //reset the goal
-                resetGoal();
+                    //pill was not placed
+                    return false;
+                }
+                else
+                {
+                    //place Pill on board
+                    getBoard().addPill(getPill());
+
+                    //now that Pill has been placed remove it
+                    removePill();
+
+                    //reset the goal
+                    resetGoal();
+
+                    //pill was placed
+                    return true;
+                }
             }
         }
         
         //reset the time until gravity has to be applied again
         getTimer().reset();
+            
+        //pill was not placed
+        return false;
     }
     
     /**
@@ -459,7 +555,7 @@ public class Player extends PlayerInformation implements IElement
     /**
      * Take the next Pill and make that the current
      */
-    protected void createPill()
+    public void createPill()
     {
         //assign the next Pill to the current
         this.pill = next;

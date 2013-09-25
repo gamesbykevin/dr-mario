@@ -21,11 +21,26 @@ public class Resources implements IResources
     //collections of resources
     private enum Type
     {
-        MenuImage, MenuAudio, Fonts, GameImage
+        MenuImage, MenuAudio, Fonts, GameImage, GameMusic, MenuMusic, GameAudio
     }
     
     //root directory of all resources
     public static final String RESOURCE_DIR = "resources/"; 
+    
+    public enum GameAudio
+    {
+        Match, Stack, Chain, Rotate
+    }
+    
+    public enum MenuMusic
+    {
+        Title, Options
+    }
+    
+    public enum GameMusic
+    {
+        Fever, Chill, Lose, Win
+    }
     
     public enum GameImage
     {
@@ -56,6 +71,12 @@ public class Resources implements IResources
     {
         everyResource = new LinkedHashMap<>();
         
+        //load game sound effects
+        add(Type.GameAudio, (Object[])GameAudio.values(), RESOURCE_DIR + "audio/game/sound/{0}.wav", "Loading Game Sound Resources", Manager.Type.Audio);
+        
+        //load game music
+        add(Type.GameMusic, (Object[])GameMusic.values(), RESOURCE_DIR + "audio/game/music/{0}.mp3", "Loading Game Music Resources", Manager.Type.Audio);
+        
         //load single sprite sheet
         add(Type.GameImage, (Object[])GameImage.values(), RESOURCE_DIR + "images/game/{0}.png", "Loading Game Image Resources", Manager.Type.Image);
         
@@ -65,8 +86,11 @@ public class Resources implements IResources
         //load all game fonts
         add(Type.Fonts,  (Object[])Fonts.values(),  RESOURCE_DIR + "font/{0}.ttf", "Loading Font Resources", Manager.Type.Font);
         
-        //load all menu audio
-        add(Type.MenuAudio, (Object[])MenuAudio.values(), RESOURCE_DIR + "audio/menu/{0}.wav", "Loading Menu Audio Resources", Manager.Type.Audio);
+        //load all menu audio effects
+        add(Type.MenuAudio, (Object[])MenuAudio.values(), RESOURCE_DIR + "audio/menu/sound/{0}.wav", "Loading Menu Audio Resources", Manager.Type.Audio);
+        
+        //load all menu music
+        add(Type.MenuMusic, (Object[])MenuMusic.values(), RESOURCE_DIR + "audio/menu/music/{0}.mp3", "Loading Menu Music Resources", Manager.Type.Audio);
     }
     
     //add a collection of resources audio/image/font/text
@@ -112,9 +136,34 @@ public class Resources implements IResources
         return getResources(Type.MenuImage).getImage(key);
     }
     
+    public void playMenuAudio(final Object key, final boolean loop)
+    {
+        getResources(Type.MenuAudio).playAudio(key, loop);
+    }
+    
+    public void playGameMusic(final Object key, final boolean loop)
+    {
+        getResources(Type.GameMusic).playAudio(key, loop);
+    }
+    
+    public void playGameAudio(final Object key, final boolean loop)
+    {
+        getResources(Type.GameAudio).playAudio(key, loop);
+    }
+    
+    public void playMenuMusic(final Object key, final boolean loop)
+    {
+        getResources(Type.MenuMusic).playAudio(key, loop);
+    }
+    
     public Audio getMenuAudio(final Object key)
     {
         return getResources(Type.MenuAudio).getAudio(key);
+    }
+    
+    public Audio getMenuMusic(final Object key)
+    {
+        return getResources(Type.MenuMusic).getAudio(key);
     }
     
     /**
@@ -123,6 +172,9 @@ public class Resources implements IResources
     public void stopAllSound()
     {
         getResources(Type.MenuAudio).stopAllAudio();
+        getResources(Type.MenuMusic).stopAllAudio();
+        getResources(Type.GameAudio).stopAllAudio();
+        getResources(Type.GameMusic).stopAllAudio();
     }
     
     /**
@@ -171,7 +223,9 @@ public class Resources implements IResources
     public void setAudioEnabled(final boolean enabled)
     {
         getResources(Type.MenuAudio).setAudioEnabled(enabled);
-        
+        getResources(Type.MenuMusic).setAudioEnabled(enabled);
+        getResources(Type.GameAudio).setAudioEnabled(enabled);
+        getResources(Type.GameMusic).setAudioEnabled(enabled);
         //all other existing audio collections should be disabled here as well
         
     }

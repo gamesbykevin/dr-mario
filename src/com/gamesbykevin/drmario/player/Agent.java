@@ -9,6 +9,7 @@ import com.gamesbykevin.drmario.block.Virus;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
 import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
+import com.gamesbykevin.drmario.resource.Resources.*;
 import com.gamesbykevin.drmario.shared.IElement;
 import java.awt.Rectangle;
 
@@ -56,7 +57,7 @@ public final class Agent extends Player implements IElement
     //movement delay for the differet speed(s)
     private static final long SPEED_LOW = TimerCollection.toNanoSeconds(750L);
     private static final long SPEED_MED = TimerCollection.toNanoSeconds(250L);
-    private static final long SPEED_HI  = TimerCollection.toNanoSeconds(125L);
+    private static final long SPEED_HI  = TimerCollection.toNanoSeconds(165L);
     
     public Agent(final Rectangle renderLocation)
     {
@@ -139,6 +140,9 @@ public final class Agent extends Player implements IElement
                 {
                     //rotate Pill
                     getPill().rotate();
+                    
+                    //play sound effect
+                    engine.getResources().playGameAudio(GameAudio.Rotate, false);
                 }
                 else
                 {
@@ -146,7 +150,11 @@ public final class Agent extends Player implements IElement
                     if (getPill().getCol() == getGoal().getCol())
                     {
                         //drop Pill to next row
-                        super.applyGravity();
+                        final boolean result = applyGravity();
+                        
+                        //if block(s) were placed play sound effect
+                        if (result)
+                            engine.getResources().playGameAudio(GameAudio.Stack, false);
                     }
                     else
                     {
@@ -159,6 +167,9 @@ public final class Agent extends Player implements IElement
                             //if there was a collision move our Pill back
                             if (getBoard().hasCollision(getPill()) && getPill().getRow() > 0)
                                 getPill().decreaseCol();
+                            
+                            //play sound effect
+                            //engine.getResources().getGameAudio(GameAudio.Move).play();
                         }
 
                         //we are east of our goal so move west
@@ -170,6 +181,9 @@ public final class Agent extends Player implements IElement
                             //if there was a collision move our Pill back
                             if (getBoard().hasCollision(getPill()) && getPill().getRow() > 0)
                                 getPill().increaseCol();
+                            
+                            //play sound effect
+                            //engine.getResources().getGameAudio(GameAudio.Move).play();
                         }
                     }
                 }
@@ -189,7 +203,7 @@ public final class Agent extends Player implements IElement
         for (int col=0; col < getBoard().getCols(); col++)
         {
             //get the first block found in the current column so we know where to place the Pill
-            final Block block = getBlockBelow(col);
+            final Block block = getBoard().getBlockBelow(col);
             
             //check every rotation at the current position
             for (Rotation rotation : Rotation.values())
@@ -201,7 +215,7 @@ public final class Agent extends Player implements IElement
                 getPill().setCol(col);
                 
                 //we also need to get the block below the Pill Extra
-                final Block extraBlock = getBlockBelow(getPill().getExtra().getCol());
+                final Block extraBlock = getBoard().getBlockBelow(getPill().getExtra().getCol());
                 
                 //we need to find the appropriate place height
                 if (block != null && extraBlock != null)
@@ -325,7 +339,7 @@ public final class Agent extends Player implements IElement
             return tmpScore;
         
         //does the same column as the Pill contain a virus
-        final boolean hasVirus = hasVirus(blockPill.getCol());
+        final boolean hasVirus = (getVirus(blockPill.getCol()) != null);
 
         //does the extra Block match the block below
         if (blockPill.hasMatch(blockBelow.getType()))
@@ -396,33 +410,11 @@ public final class Agent extends Player implements IElement
     }
     
     /**
-     * Start at the first row 0 and move south until we find a Block
-     * If no Block is found null is returned.
-     * 
-     * @param col The column
-     * @param board The board to check
-     * @return Block if there is no Block below null will be returned
-     */
-    private Block getBlockBelow(final int col)
-    {
-        //start at the top and continue moving south
-        for (int row = 0; row < getBoard().getRows(); row++)
-        {
-            //if the Block exists return it
-            if (getBoard().getBlock(col, row) != null)
-                return getBoard().getBlock(col, row);
-        }
-        
-        //no Block was found so return null
-        return null;
-    }
-    
-    /**
      * Check the specified column to determine if a virus exists.
      * @param col The column we want to start at.
-     * @return True if a virus is located in the column, false otherwise
+     * @return Block - The virus found and if none found null will be returned.
      */
-    private boolean hasVirus(final int col)
+    private Block getVirus(final int col)
     {
         //start at the top and continue moving south
         for (int row = 0; row < getBoard().getRows(); row++)
@@ -431,10 +423,10 @@ public final class Agent extends Player implements IElement
             
             //if the Block exists and is a virus, then there is a virus below
             if (block != null && Virus.isVirus(block))
-                return true;
+                return block;
         }
         
-        //no virus was found so return false
-        return false;
+        //no virus was found so return
+        return null;
     }
 }

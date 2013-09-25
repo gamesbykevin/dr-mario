@@ -16,11 +16,12 @@ public class Options extends Layer implements LayerRules
     {
         super(Layer.Type.SCROLL_HORIZONTAL_WEST_REPEAT, engine.getMain().getScreen());
         
-        super.setTitle("Options");
-        super.setImage(engine.getResources().getMenuImage(Resources.MenuImage.TitleBackground));
-        super.setTimer(new Timer(TimerCollection.toNanoSeconds(5000L)));
-        super.setForce(false);
-        super.setPause(true);
+        setTitle("Options");
+        setImage(engine.getResources().getMenuImage(Resources.MenuImage.TitleBackground));
+        setTimer(new Timer(TimerCollection.toNanoSeconds(5000L)));
+        setSound(engine.getResources().getMenuMusic(Resources.MenuMusic.Options));
+        setForce(false);
+        setPause(true);
         
         setup(engine);
     }
@@ -64,7 +65,6 @@ public class Options extends Layer implements LayerRules
         tmp.add("Attack (vs)",      engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
         super.add(OptionKey.Mode, tmp);
         
-        
         //# of opponents facing
         tmp = new Option("# Opponents: ");
         for (int i=0; i < 5; i++)
@@ -72,6 +72,13 @@ public class Options extends Layer implements LayerRules
             tmp.add(Integer.toString(i), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
         }
         super.add(OptionKey.OpponentTotal, tmp);
+        
+        //in game music selections
+        tmp = new Option("Music: ");
+        tmp.add("Fever", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("Chill", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("None", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        super.add(OptionKey.Music, tmp);
         
         tmp = new Option("Sound: ");
         for (Toggle toggle : Toggle.values())
