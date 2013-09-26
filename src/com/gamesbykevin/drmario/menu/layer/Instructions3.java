@@ -5,14 +5,14 @@ import com.gamesbykevin.drmario.engine.Engine;
 import com.gamesbykevin.drmario.resource.Resources;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 
-public class Instructions1 extends Layer implements LayerRules
+public class Instructions3 extends Layer implements LayerRules
 {
-    public Instructions1(final Engine engine)
+    public Instructions3(final Engine engine)
     {
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
-        setImage(engine.getResources().getMenuImage(Resources.MenuImage.Instructions1));
-        setNextLayer(CustomMenu.LayerKey.Instructions2);
+        setImage(engine.getResources().getMenuImage(Resources.MenuImage.Instructions3));
+        setNextLayer(CustomMenu.LayerKey.Instructions4);
         setForce(false);
         setPause(true);
         setTimer(null);

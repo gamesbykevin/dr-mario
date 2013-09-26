@@ -15,7 +15,7 @@ public class MainTitle extends Layer implements LayerRules
 {
     public MainTitle(final Engine engine) throws Exception
     {
-        super(Layer.Type.SCROLL_HORIZONTAL_WEST_REPEAT, engine.getMain().getScreen());
+        super(Layer.Type.NONE, engine.getMain().getScreen());
         
         setTitle(Shared.GAME_NAME);
         setImage(engine.getResources().getMenuImage(Resources.MenuImage.TitleBackground));
@@ -23,6 +23,7 @@ public class MainTitle extends Layer implements LayerRules
         setPause(true);
         setTimer(new Timer(TimerCollection.toNanoSeconds(5000L)));
         setSound(engine.getResources().getMenuMusic(MenuMusic.Title));
+        setOptionContainerRatio(RATIO);
         setup(engine);
     }
     

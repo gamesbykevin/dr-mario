@@ -13,10 +13,10 @@ public class OptionsInGame extends Layer implements LayerRules
     {
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
-        super.setTitle("Options");
-        super.setForce(false);
-        super.setPause(true);
-        
+        setTitle("Options");
+        setForce(false);
+        setPause(true);
+        setOptionContainerRatio(RATIO);
         setup(engine);
     }
     

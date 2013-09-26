@@ -14,7 +14,7 @@ public class ExitGameConfirm extends Layer implements LayerRules
         super.setTitle("Confirm Exit");
         super.setForce(false);
         super.setPause(true);
-        
+        super.setOptionContainerRatio(RATIO);
         setup(engine);
     }
     

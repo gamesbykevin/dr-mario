@@ -38,7 +38,7 @@ public class CustomMenu extends Menu
         Title, Credits, MainTitle, Options, OptionsInGame, 
         NewGameConfirm, ExitGameConfirm, NoFocus, StartGame, NewGameConfirmed, 
         Controls1,  
-        Instructions1, 
+        Instructions1, Instructions2, Instructions3, Instructions4
     }
     
     /**
@@ -70,6 +70,9 @@ public class CustomMenu extends Menu
         super.add(LayerKey.Options,         new Options(engine));
         super.add(LayerKey.Controls1,       new Controls1(engine));
         super.add(LayerKey.Instructions1,   new Instructions1(engine));
+        super.add(LayerKey.Instructions2,   new Instructions2(engine));
+        super.add(LayerKey.Instructions3,   new Instructions3(engine));
+        super.add(LayerKey.Instructions4,   new Instructions4(engine));
         super.add(LayerKey.OptionsInGame,   new OptionsInGame(engine));
         super.add(LayerKey.NewGameConfirm,  new NewGameConfirm(engine));
         super.add(LayerKey.ExitGameConfirm, new ExitGameConfirm(engine));

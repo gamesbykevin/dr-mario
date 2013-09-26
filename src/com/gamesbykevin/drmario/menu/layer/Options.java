@@ -14,7 +14,7 @@ public class Options extends Layer implements LayerRules
 {
     public Options(final Engine engine) throws Exception
     {
-        super(Layer.Type.SCROLL_HORIZONTAL_WEST_REPEAT, engine.getMain().getScreen());
+        super(Layer.Type.NONE, engine.getMain().getScreen());
         
         setTitle("Options");
         setImage(engine.getResources().getMenuImage(Resources.MenuImage.TitleBackground));
@@ -22,7 +22,7 @@ public class Options extends Layer implements LayerRules
         setSound(engine.getResources().getMenuMusic(Resources.MenuMusic.Options));
         setForce(false);
         setPause(true);
-        
+        setOptionContainerRatio(RATIO);
         setup(engine);
     }
     
