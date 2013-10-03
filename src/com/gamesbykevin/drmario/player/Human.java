@@ -3,7 +3,7 @@ package com.gamesbykevin.drmario.player;
 import com.gamesbykevin.drmario.shared.IElement;
 
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.*;
 import java.awt.Rectangle;
 
 import java.awt.event.KeyEvent;
@@ -63,7 +63,7 @@ public final class Human extends Player implements IElement
             
             //if block(s) were placed play sound effect
             if (result)
-                engine.getResources().playGameAudio(Resources.GameAudio.Stack, false);
+                engine.getResources().playGameAudio(GameAudio.Keys.Stack, false);
         }
         
         //the user wants to rotate the pieces
@@ -83,7 +83,7 @@ public final class Human extends Player implements IElement
             else
             {
                 //play sound effect
-                engine.getResources().playGameAudio(Resources.GameAudio.Rotate, false);
+                engine.getResources().playGameAudio(GameAudio.Keys.Rotate, false);
             }
         }
         

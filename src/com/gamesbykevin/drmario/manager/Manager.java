@@ -10,8 +10,7 @@ import com.gamesbykevin.drmario.player.Agent;
 import com.gamesbykevin.drmario.player.Human;
 import com.gamesbykevin.drmario.player.Player;
 import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
-import com.gamesbykevin.drmario.resource.Resources.GameMusic;
-import com.gamesbykevin.drmario.resource.Resources.GameImage;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.framework.util.TimerCollection;
 
 import java.awt.Graphics;
@@ -103,7 +102,7 @@ public final class Manager implements Disposable
         }
         
         //sprite sheet for game
-        final Image image = engine.getResources().getGameImage(GameImage.Spritesheet);
+        final Image image = engine.getResources().getGameImage(GameImage.Keys.Spritesheet);
         
         //the location where the human will be drawn
         final Rectangle renderLocation;
@@ -296,10 +295,10 @@ public final class Manager implements Disposable
             engine.getResources().stopAllSound();
             
             if (musicSelection == MUSIC_FEVER)
-                engine.getResources().playGameMusic(GameMusic.Fever, true);
+                engine.getResources().playGameMusic(GameMusic.Keys.Fever, true);
             
             if (musicSelection == MUSIC_CHILL)
-                engine.getResources().playGameMusic(GameMusic.Chill, true);
+                engine.getResources().playGameMusic(GameMusic.Keys.Chill, true);
             
             musicStarted = true;
         }
@@ -353,11 +352,11 @@ public final class Manager implements Disposable
             
             if (human.hasWin())
             {
-                engine.getResources().playGameMusic(GameMusic.Win, true);
+                engine.getResources().playGameMusic(GameMusic.Keys.Win, true);
             }
             else
             {
-                engine.getResources().playGameMusic(GameMusic.Lose, true);
+                engine.getResources().playGameMusic(GameMusic.Keys.Lose, true);
             }
         }
     }

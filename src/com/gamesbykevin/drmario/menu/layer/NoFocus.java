@@ -4,7 +4,7 @@ import com.gamesbykevin.framework.menu.Layer;
 import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 
 public class NoFocus extends Layer implements LayerRules
@@ -13,7 +13,7 @@ public class NoFocus extends Layer implements LayerRules
     {
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
-        setImage(engine.getResources().getMenuImage(Resources.MenuImage.AppletFocus));
+        setImage(engine.getResources().getMenuImage(MenuImage.Keys.AppletFocus));
         setForce(false);
         setPause(true);
         

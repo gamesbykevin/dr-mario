@@ -5,8 +5,7 @@ import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
-import com.gamesbykevin.drmario.resource.Resources.MenuImage;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 
 import java.awt.Rectangle;
@@ -17,7 +16,7 @@ public class Title extends Layer implements LayerRules
     {
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
-        super.setImage(engine.getResources().getMenuImage(MenuImage.TitleScreen));
+        super.setImage(engine.getResources().getMenuImage(MenuImage.Keys.TitleScreen));
 
         //we will not force this layer to show
         setForce(false);

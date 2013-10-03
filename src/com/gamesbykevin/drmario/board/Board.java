@@ -7,7 +7,7 @@ import com.gamesbykevin.framework.util.*;
 import com.gamesbykevin.drmario.block.*;
 import com.gamesbykevin.drmario.block.Block.*;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources.*;
+import com.gamesbykevin.drmario.resource.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -336,7 +336,7 @@ public class Board extends Sprite
                             addScore((countV * SCORE_VIRUS_KILL_CHAIN));
                             
                             //play chain sound effect
-                            engine.getResources().playGameAudio(GameAudio.Chain, false);
+                            engine.getResources().playGameAudio(GameAudio.Keys.Chain, false);
                         }
                         else
                         {
@@ -344,7 +344,7 @@ public class Board extends Sprite
                             addScore((countV * SCORE_VIRUS_KILL));
                             
                             //play match sound effect
-                            engine.getResources().playGameAudio(GameAudio.Match, false);
+                            engine.getResources().playGameAudio(GameAudio.Keys.Match, false);
                         }
                     }
                     else

@@ -2,7 +2,7 @@ package com.gamesbykevin.drmario.menu.layer;
 
 import com.gamesbykevin.framework.menu.Layer;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 
 public class Controls1 extends Layer implements LayerRules
@@ -11,7 +11,7 @@ public class Controls1 extends Layer implements LayerRules
     {
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
-        setImage(engine.getResources().getMenuImage(Resources.MenuImage.Controls1));
+        setImage(engine.getResources().getMenuImage(MenuImage.Keys.Controls1));
         setNextLayer(CustomMenu.LayerKey.MainTitle);
         setForce(false);
         setPause(true);

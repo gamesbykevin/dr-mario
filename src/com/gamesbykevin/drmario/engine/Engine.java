@@ -2,7 +2,7 @@ package com.gamesbykevin.drmario.engine;
 
 import com.gamesbykevin.drmario.main.Main;
 import com.gamesbykevin.drmario.resource.Resources;
-import com.gamesbykevin.drmario.resource.Resources.*;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.framework.input.*;
 import com.gamesbykevin.framework.input.Keyboard;
 
@@ -188,7 +188,7 @@ public class Engine implements KeyListener, MouseMotionListener, MouseListener, 
         //NOTE: DRAW MAIN GAME HERE
         if (manager != null)
         {
-            graphics.setFont(resources.getFont(Fonts.Game).deriveFont(18f));
+            graphics.setFont(resources.getFont(AllFonts.Keys.Game).deriveFont(18f));
             
             manager.render(graphics);
         }
@@ -203,7 +203,7 @@ public class Engine implements KeyListener, MouseMotionListener, MouseListener, 
     private void renderMenu(Graphics graphics) throws Exception
     {
         //set the appropriate game font
-        graphics.setFont(resources.getFont(Fonts.Menu).deriveFont(18f));
+        graphics.setFont(resources.getFont(AllFonts.Keys.Menu).deriveFont(18f));
         
         //if menu is setup draw menu
         if (menu.isSetup())
@@ -214,15 +214,15 @@ public class Engine implements KeyListener, MouseMotionListener, MouseListener, 
         {
             if (mouse.getLocation() != null)
             {
-                if (resources.getMenuImage(Resources.MenuImage.Mouse) != null && resources.getMenuImage(Resources.MenuImage.MouseDrag) != null)
+                if (resources.getMenuImage(MenuImage.Keys.Mouse) != null && resources.getMenuImage(MenuImage.Keys.MouseDrag) != null)
                 {
                     if (mouse.isMouseDragged())
                     {
-                        graphics.drawImage(resources.getMenuImage(Resources.MenuImage.MouseDrag), mouse.getLocation().x, mouse.getLocation().y, null);
+                        graphics.drawImage(resources.getMenuImage(MenuImage.Keys.MouseDrag), mouse.getLocation().x, mouse.getLocation().y, null);
                     }
                     else
                     {
-                        graphics.drawImage(resources.getMenuImage(Resources.MenuImage.Mouse), mouse.getLocation().x, mouse.getLocation().y, null);
+                        graphics.drawImage(resources.getMenuImage(MenuImage.Keys.Mouse), mouse.getLocation().x, mouse.getLocation().y, null);
                     }
                 }
             }

@@ -6,7 +6,7 @@ import com.gamesbykevin.drmario.block.Pill;
 import com.gamesbykevin.drmario.block.Pill.Rotation;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources.*;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.shared.IElement;
 
 import com.gamesbykevin.framework.base.Cell;
@@ -245,7 +245,7 @@ public class Player extends PlayerInformation implements IElement
             
             //if block(s) were placed play sound effect
             if (result)
-                engine.getResources().playGameAudio(GameAudio.Stack, false);
+                engine.getResources().playGameAudio(GameAudio.Keys.Stack, false);
         }
     }
     

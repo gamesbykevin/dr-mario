@@ -9,7 +9,7 @@ import com.gamesbykevin.drmario.block.Virus;
 import com.gamesbykevin.drmario.board.Board;
 import com.gamesbykevin.drmario.engine.Engine;
 import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
-import com.gamesbykevin.drmario.resource.Resources.*;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.shared.IElement;
 import java.awt.Rectangle;
 
@@ -142,7 +142,7 @@ public final class Agent extends Player implements IElement
                     getPill().rotate();
                     
                     //play sound effect
-                    engine.getResources().playGameAudio(GameAudio.Rotate, false);
+                    engine.getResources().playGameAudio(GameAudio.Keys.Rotate, false);
                 }
                 else
                 {
@@ -154,7 +154,7 @@ public final class Agent extends Player implements IElement
                         
                         //if block(s) were placed play sound effect
                         if (result)
-                            engine.getResources().playGameAudio(GameAudio.Stack, false);
+                            engine.getResources().playGameAudio(GameAudio.Keys.Stack, false);
                     }
                     else
                     {

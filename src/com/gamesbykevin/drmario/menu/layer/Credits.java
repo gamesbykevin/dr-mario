@@ -4,7 +4,7 @@ import com.gamesbykevin.framework.menu.Layer;
 import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 
 public class Credits extends Layer implements LayerRules
@@ -13,7 +13,7 @@ public class Credits extends Layer implements LayerRules
     {
         super(Layer.Type.SCROLL_VERTICAL_NORTH, engine.getMain().getScreen());
         
-        setImage(engine.getResources().getMenuImage(Resources.MenuImage.Credits));
+        setImage(engine.getResources().getMenuImage(MenuImage.Keys.Credits));
         setForce(false);
         setPause(false);
         setNextLayer(CustomMenu.LayerKey.MainTitle);

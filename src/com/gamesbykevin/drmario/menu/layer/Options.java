@@ -7,7 +7,7 @@ import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.player.PlayerInformation.SpeedKey;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu.*;
 
 public class Options extends Layer implements LayerRules
@@ -17,9 +17,9 @@ public class Options extends Layer implements LayerRules
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
         setTitle("Options");
-        setImage(engine.getResources().getMenuImage(Resources.MenuImage.TitleBackground));
+        setImage(engine.getResources().getMenuImage(MenuImage.Keys.TitleBackground));
         setTimer(new Timer(TimerCollection.toNanoSeconds(5000L)));
-        setSound(engine.getResources().getMenuMusic(Resources.MenuMusic.Options));
+        setSound(engine.getResources().getMenuMusic(MenuMusic.Keys.Options));
         setForce(false);
         setPause(true);
         setOptionContainerRatio(RATIO);
@@ -36,7 +36,7 @@ public class Options extends Layer implements LayerRules
         tmp = new Option("Level: ");
         for (int i=1; i <= 20; i++)
         {
-            tmp.add(Integer.toString(i), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(Integer.toString(i), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(OptionKey.Level, tmp);
         
@@ -44,7 +44,7 @@ public class Options extends Layer implements LayerRules
         tmp = new Option("Speed: ");
         for (SpeedKey key : SpeedKey.values())
         {
-            tmp.add(key.toString(), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(key.toString(), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(OptionKey.Speed, tmp);
         
@@ -53,44 +53,44 @@ public class Options extends Layer implements LayerRules
         tmp = new Option("Mode: ");
         
         //original single player mode
-        tmp.add("Regular (single)", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("Regular (single)", engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         
         //single player mode where you are timed to finish each level
-        tmp.add("Timed (single)",   engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("Timed (single)",   engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         
         //first to clear the board wins
-        tmp.add("Regular (vs)",     engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("Regular (vs)",     engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         
         //first to clear the board wins with penalties added for each virus kill
-        tmp.add("Attack (vs)",      engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("Attack (vs)",      engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         super.add(OptionKey.Mode, tmp);
         
         //# of opponents facing
         tmp = new Option("# Opponents: ");
         for (int i=0; i < 5; i++)
         {
-            tmp.add(Integer.toString(i), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(Integer.toString(i), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(OptionKey.OpponentTotal, tmp);
         
         //in game music selections
         tmp = new Option("Music: ");
-        tmp.add("Fever", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
-        tmp.add("Chill", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
-        tmp.add("None", engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+        tmp.add("Fever", engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
+        tmp.add("Chill", engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
+        tmp.add("None", engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         super.add(OptionKey.Music, tmp);
         
         tmp = new Option("Sound: ");
         for (Toggle toggle : Toggle.values())
         {
-            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(OptionKey.Sound, tmp);
         
         tmp = new Option("FullScreen: ");
         for (Toggle toggle : Toggle.values())
         {
-            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(OptionKey.FullScreen, tmp);
         

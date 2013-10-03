@@ -6,8 +6,7 @@ import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
-import com.gamesbykevin.drmario.resource.Resources.MenuMusic;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 import com.gamesbykevin.drmario.shared.Shared;
 
@@ -18,11 +17,11 @@ public class MainTitle extends Layer implements LayerRules
         super(Layer.Type.NONE, engine.getMain().getScreen());
         
         setTitle(Shared.GAME_NAME);
-        setImage(engine.getResources().getMenuImage(Resources.MenuImage.TitleBackground));
+        setImage(engine.getResources().getMenuImage(MenuImage.Keys.TitleBackground));
         setForce(false);
         setPause(true);
         setTimer(new Timer(TimerCollection.toNanoSeconds(5000L)));
-        setSound(engine.getResources().getMenuMusic(MenuMusic.Title));
+        setSound(engine.getResources().getMenuMusic(MenuMusic.Keys.Title));
         setOptionContainerRatio(RATIO);
         setup(engine);
     }

@@ -3,7 +3,7 @@ package com.gamesbykevin.drmario.menu.layer;
 import com.gamesbykevin.framework.menu.Layer;
 import com.gamesbykevin.framework.menu.Option;
 import com.gamesbykevin.drmario.engine.Engine;
-import com.gamesbykevin.drmario.resource.Resources;
+import com.gamesbykevin.drmario.resource.*;
 import com.gamesbykevin.drmario.menu.CustomMenu;
 import com.gamesbykevin.drmario.menu.CustomMenu.Toggle;
 
@@ -33,14 +33,14 @@ public class OptionsInGame extends Layer implements LayerRules
         tmp = new Option("Sound: ");
         for (Toggle toggle : Toggle.values())
         {
-            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(CustomMenu.OptionKey.Sound, tmp);
         
         tmp = new Option("FullScreen: ");
         for (Toggle toggle : Toggle.values())
         {
-            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(Resources.MenuAudio.OptionChange));
+            tmp.add(toggle.toString(), engine.getResources().getMenuAudio(MenuAudio.Keys.OptionChange));
         }
         super.add(CustomMenu.OptionKey.FullScreen, tmp);
         
