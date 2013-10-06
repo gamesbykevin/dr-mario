@@ -2,7 +2,7 @@ package com.gamesbykevin.drmario.player;
 
 import com.gamesbykevin.drmario.block.Block;
 import com.gamesbykevin.framework.base.Sprite;
-import com.gamesbykevin.framework.base.SpriteSheetAnimation;
+import com.gamesbykevin.framework.base.Animation;
 import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.board.Board;
@@ -165,7 +165,7 @@ public class PlayerInformation extends Sprite
     private boolean showGameover = false;
     private boolean showSuccess = false;
     
-    private HashMap<AnimationKey, SpriteSheetAnimation> animations;
+    private HashMap<AnimationKey, Animation> animations;
     
     //various animation/duration delays
     private static final long DURATION_DELAY_VIRUS_HURT = TimerCollection.toNanoSeconds(2000L);
@@ -244,9 +244,9 @@ public class PlayerInformation extends Sprite
         animations = new HashMap<>();
         
         //object we will use for our sprite sheet animations
-        SpriteSheetAnimation ssa;
+        Animation ssa;
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(DISPLAY_VIRUS_BLUE_ALIVE_1, DURATION_DELAY_VIRUS_ALIVE);
         ssa.add(DISPLAY_VIRUS_BLUE_ALIVE_2, DURATION_DELAY_VIRUS_ALIVE);
         ssa.add(DISPLAY_VIRUS_BLUE_ALIVE_3, DURATION_DELAY_VIRUS_ALIVE);
@@ -254,7 +254,7 @@ public class PlayerInformation extends Sprite
         ssa.setLoop(true);
         animations.put(AnimationKey.DisplayAliveBlue, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(DISPLAY_VIRUS_RED_ALIVE_1, DURATION_DELAY_VIRUS_ALIVE);
         ssa.add(DISPLAY_VIRUS_RED_ALIVE_2, DURATION_DELAY_VIRUS_ALIVE);
         ssa.add(DISPLAY_VIRUS_RED_ALIVE_3, DURATION_DELAY_VIRUS_ALIVE);
@@ -262,7 +262,7 @@ public class PlayerInformation extends Sprite
         ssa.setLoop(true);
         animations.put(AnimationKey.DisplayAliveRed, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(DISPLAY_VIRUS_YELLOW_ALIVE_1, DURATION_DELAY_VIRUS_ALIVE);
         ssa.add(DISPLAY_VIRUS_YELLOW_ALIVE_2, DURATION_DELAY_VIRUS_ALIVE);
         ssa.add(DISPLAY_VIRUS_YELLOW_ALIVE_3, DURATION_DELAY_VIRUS_ALIVE);
@@ -270,32 +270,32 @@ public class PlayerInformation extends Sprite
         ssa.setLoop(true);
         animations.put(AnimationKey.DisplayAliveYellow, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(DISPLAY_VIRUS_BLUE_HURT_1, DELAY_ANIMATION_VIRUS_HURT);
         ssa.add(DISPLAY_VIRUS_BLUE_HURT_2, DELAY_ANIMATION_VIRUS_HURT);
         ssa.setLoop(true);
         animations.put(AnimationKey.DisplayHurtBlue, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(DISPLAY_VIRUS_RED_HURT_1, DELAY_ANIMATION_VIRUS_HURT);
         ssa.add(DISPLAY_VIRUS_RED_HURT_2, DELAY_ANIMATION_VIRUS_HURT);
         ssa.setLoop(true);
         animations.put(AnimationKey.DisplayHurtRed, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(DISPLAY_VIRUS_YELLOW_HURT_1, DELAY_ANIMATION_VIRUS_HURT);
         ssa.add(DISPLAY_VIRUS_YELLOW_HURT_2, DELAY_ANIMATION_VIRUS_HURT);
         ssa.setLoop(true);
         animations.put(AnimationKey.DisplayHurtYellow, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(MARIO_PILL_THROW_1, DELAY_PILL_THROW);
         ssa.add(MARIO_PILL_THROW_2, DELAY_PILL_THROW);
         ssa.add(MARIO_PILL_THROW_3, DELAY_PILL_THROW);
         ssa.setLoop(false);
         animations.put(AnimationKey.MarioPillThrow, ssa);
 
-        ssa = new SpriteSheetAnimation();
+        ssa = new Animation();
         ssa.add(MARIO_GAME_OVER_1, DELAY_GAME_OVER_DISPLAY);
         ssa.add(MARIO_GAME_OVER_2, DELAY_GAME_OVER_DISPLAY);
         ssa.setLoop(true);

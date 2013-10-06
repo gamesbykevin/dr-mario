@@ -1,7 +1,7 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.drmario.block.Block.Type;
-import com.gamesbykevin.framework.base.SpriteSheetAnimation;
+import com.gamesbykevin.framework.base.Animation;
 import com.gamesbykevin.framework.util.TimerCollection;
 import java.awt.Rectangle;
 

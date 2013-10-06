@@ -1,7 +1,7 @@
 package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Sprite;
-import com.gamesbykevin.framework.base.SpriteSheetAnimation;
+import com.gamesbykevin.framework.base.Animation;
 import com.gamesbykevin.framework.resources.Disposable;
 import com.gamesbykevin.framework.util.TimerCollection;
 
@@ -98,7 +98,7 @@ public class Block extends Sprite implements Disposable
         block.createSpriteSheet();
         
         //object we will use for our sprite sheet animation
-        SpriteSheetAnimation animation = new SpriteSheetAnimation();
+        Animation animation = new Animation();
         
         switch(block.getType())
         {

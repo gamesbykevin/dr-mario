@@ -2,7 +2,7 @@ package com.gamesbykevin.drmario.block;
 
 import com.gamesbykevin.framework.base.Cell;
 import com.gamesbykevin.framework.base.Sprite;
-import com.gamesbykevin.framework.base.SpriteSheetAnimation;
+import com.gamesbykevin.framework.base.Animation;
 import com.gamesbykevin.framework.util.TimerCollection;
 
 import com.gamesbykevin.drmario.block.Block.Type;
