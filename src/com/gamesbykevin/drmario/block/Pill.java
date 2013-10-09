@@ -190,7 +190,7 @@ public class Pill extends Block implements IBlock
     public void rotate()
     {
         //store the previous position
-        this.previous = extra.getCell();
+        this.previous = extra;
         
         //translate piece to the origin
         extra.setCol(extra.getCol() - getCol());

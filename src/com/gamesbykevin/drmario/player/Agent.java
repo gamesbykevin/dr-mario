@@ -1,5 +1,6 @@
 package com.gamesbykevin.drmario.player;
 
+import com.gamesbykevin.framework.base.Cell;
 import com.gamesbykevin.framework.util.Timer;
 import com.gamesbykevin.framework.util.TimerCollection;
 
@@ -265,7 +266,7 @@ public final class Agent extends Player implements IElement
                 if (tmpScore > score)
                 {
                     //set the location goal and rotation
-                    super.setGoals(getPill().getCell(), getPill().getRotation());
+                    super.setGoals(new Cell(getPill().getCol(), getPill().getRow()), getPill().getRotation());
 
                     //set this score as the one to beat
                     score = tmpScore;

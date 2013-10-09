@@ -644,7 +644,7 @@ public class Board extends Sprite
         block.setPosition(getX(), getY());
 
         //set the block to be in the correct location in the array
-        setBlock(block.getCell(), block);
+        setBlock(block.getCol(), block.getRow(), block);
 
         //remove the block from the current position in the array
         removeBlock(col, row);
