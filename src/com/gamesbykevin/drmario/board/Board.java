@@ -494,7 +494,7 @@ public class Board extends Sprite
      * @param board The board to check
      * @return Block if there is no Block below null will be returned
      */
-    public Block getBlockBelow(final int col)
+    public Block getBlockBelow(final double col)
     {
         //start at the top and continue moving south
         for (int row = 0; row < getRows(); row++)
@@ -850,19 +850,19 @@ public class Board extends Sprite
      * @param row Row
      * @return Block, null will be returned if the col/row is out of bounds
      */
-    public Block getBlock(final int col, final int row)
+    public Block getBlock(final double col, final double row)
     {
         if (col < 0 || col > blocks[0].length - 1)
             return null;
         if (row < 0 || row > blocks.length - 1)
             return null;
         
-        return blocks[row][col];
+        return blocks[(int)row][(int)col];
     }
     
     public Block getBlock(final Block block)
     {
-        return getBlock(block.getCol(), block.getRow());
+        return getBlock((int)block.getCol(), (int)block.getRow());
     }
     
     public Block getBlock(final Cell cell)
@@ -917,9 +917,9 @@ public class Board extends Sprite
         removeBlock(pill.getExtra().getCol(), pill.getExtra().getRow());
     }
     
-    public void removeBlock(final int col, final int row)
+    public void removeBlock(final double col, final double row)
     {
-        blocks[row][col] = null;
+        blocks[(int)row][(int)col] = null;
     }
     
     private void setBlock(final Cell cell, final Block block)
@@ -927,9 +927,9 @@ public class Board extends Sprite
         setBlock(cell.getCol(), cell.getRow(), block);
     }
     
-    private void setBlock(final int col, final int row, final Block block)
+    private void setBlock(final double col, final double row, final Block block)
     {
-        blocks[row][col] = block;
+        blocks[(int)row][(int)col] = block;
     }
     
     /**

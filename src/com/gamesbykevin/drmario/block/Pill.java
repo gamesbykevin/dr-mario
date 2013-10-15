@@ -134,18 +134,18 @@ public class Pill extends Block implements IBlock
     }
     
     @Override
-    public void setCol(final int col)
+    public void setCol(final double col)
     {
-        final int difference = super.getCol() - extra.getCol();
+        final int difference = (int)super.getCol() - (int)extra.getCol();
         
         super.setCol(col);
         extra.setCol(col - difference);
     }
     
     @Override
-    public void setRow(final int row)
+    public void setRow(final double row)
     {
-        final int difference = super.getRow() - extra.getRow();
+        final int difference = (int)super.getRow() - (int)extra.getRow();
         
         super.setRow(row);
         extra.setRow(row - difference);
@@ -158,7 +158,7 @@ public class Pill extends Block implements IBlock
      */
     public boolean hasRow(final int row)
     {
-        return (getRow() == row || extra.getRow() == row);
+        return ((int)getRow() == row || (int)extra.getRow() == row);
     }
     
     /**
@@ -197,8 +197,8 @@ public class Pill extends Block implements IBlock
         extra.setRow(extra.getRow() - getRow());
 
         //store translated location
-        final int row = extra.getRow();
-        final int col = extra.getCol();
+        final int row = (int)extra.getRow();
+        final int col = (int)extra.getCol();
 
         //rotate piece
         extra.setCol(-row);

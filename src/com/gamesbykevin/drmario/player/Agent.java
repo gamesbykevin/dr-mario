@@ -111,8 +111,8 @@ public final class Agent extends Player implements IElement
             if (getPill() != null)
             {
                 //store the original location
-                final int pillCol = getPill().getCol();
-                final int pillRow = getPill().getRow();
+                final int pillCol = (int)getPill().getCol();
+                final int pillRow = (int)getPill().getRow();
                 
                 //find the best place for the current Pill
                 locateGoal();
@@ -415,7 +415,7 @@ public final class Agent extends Player implements IElement
      * @param col The column we want to start at.
      * @return Block - The virus found and if none found null will be returned.
      */
-    private Block getVirus(final int col)
+    private Block getVirus(final double col)
     {
         //start at the top and continue moving south
         for (int row = 0; row < getBoard().getRows(); row++)
